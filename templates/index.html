@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RepairBiz — Service Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--navy:#1a2744;--navy-l:#243461;--accent:#e85d26;--accent-h:#cf4e1e;--accent-bg:rgba(232,93,38,.07);--bg:#f0f2f8;--surface:#ffffff;--sf2:#f7f8fc;--border:#e3e7f0;--text:#1a2744;--muted:#6b7a99;--light:#a8b2c8;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444;--info:#3b82f6;--sw:256px;--th:56px;--bn:62px;--r:12px;--rs:8px;--sh:0 2px 12px rgba(26,39,68,.08);--shl:0 8px 32px rgba(26,39,68,.14)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Poppins',sans-serif;font-size:14px;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+
+/* ── AUTH ─────────────────────────────────────────────────────────────── */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#1a2744 0%,#2d4a8a 55%,#1e3470 100%);padding:16px;position:relative;overflow:hidden}
+#auth-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 15% 60%,rgba(232,93,38,.18) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 85% 15%,rgba(59,130,246,.12) 0%,transparent 70%);pointer-events:none}
+.auth-card{background:#fff;border-radius:20px;padding:36px 28px;width:100%;max-width:420px;box-shadow:var(--shl);position:relative;z-index:1}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo-icon{width:56px;height:56px;background:var(--accent);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
+.auth-logo h1{font-size:26px;font-weight:800;color:var(--navy)}
+.auth-logo p{font-size:13px;color:var(--muted);margin-top:2px}
+.auth-tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:9px;text-align:center;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);transition:all .2s}
+.auth-tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+/* ── FORMS ────────────────────────────────────────────────────────────── */
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;letter-spacing:.01em}
+.form-label .req{color:var(--accent);margin-left:2px}
+.form-control{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+.form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,93,38,.12)}
+select.form-control{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7a99' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+textarea.form-control{resize:vertical;min-height:70px;line-height:1.5}
+.form-control::placeholder{color:var(--light)}
+.form-row{display:grid;gap:10px}
+.form-row.c2{grid-template-columns:1fr 1fr}
+.form-row.c3{grid-template-columns:1fr 1fr 1fr}
+
+/* Form sections inside modal */
+.form-section{background:var(--sf2);border-radius:10px;padding:14px 15px;margin-bottom:14px;border:1px solid var(--border)}
+.form-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+/* Totals rows */
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:var(--muted)}
+.total-row.grand{font-size:15px;font-weight:800;color:var(--accent);border-top:2px solid var(--border);padding-top:8px;margin-top:4px}
+.tax-in{width:72px;padding:4px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:6px;font-family:'Poppins',sans-serif;text-align:right;outline:none}
+.tax-in:focus{border-color:var(--accent)}
+
+/* ── BUTTONS ──────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;-webkit-appearance:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-h);box-shadow:0 4px 14px rgba(232,93,38,.3)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{background:var(--navy-l)}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:#fee2e2;color:var(--danger);border:none}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:7px}
+.btn-full{width:100%}
+.btn-icon{padding:7px;border-radius:var(--rs)}
+.btn:disabled{opacity:.55;cursor:not-allowed;pointer-events:none}
+.btn:active{transform:scale(.97)}
+
+/* ── APP LAYOUT ───────────────────────────────────────────────────────── */
+#app{display:none;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;width:var(--sw);height:100vh;background:var(--navy);display:flex;flex-direction:column;z-index:200;overflow-y:auto;transition:transform .28s cubic-bezier(.4,0,.2,1);overscroll-behavior:contain}
+.sidebar-logo{padding:18px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-mark{width:36px;height:36px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-logo h2{font-size:16px;font-weight:700;color:#fff;line-height:1.2}
+.sidebar-logo p{font-size:10px;color:rgba(255,255,255,.3)}
+.sidebar-nav{padding:10px 8px;flex:1}
+.nav-section{margin-bottom:18px}
+.nav-section-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;padding:0 8px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;color:rgba(255,255,255,.55);font-size:13px;font-weight:500;transition:all .18s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:rgba(232,93,38,.18);color:var(--accent);font-weight:600}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.biz-badge{display:flex;align-items:center;gap:9px;padding:9px;background:rgba(255,255,255,.06);border-radius:10px}
+.biz-avatar{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;flex-shrink:0;overflow:hidden}
+.biz-avatar img{width:100%;height:100%;object-fit:cover}
+.biz-info{flex:1;min-width:0}
+.biz-name{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.biz-email{font-size:10px;color:rgba(255,255,255,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;backdrop-filter:blur(2px)}
+.sidebar-backdrop.show{display:block}
+.main{margin-left:var(--sw);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;height:var(--th);padding:0 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar h2{font-size:17px;font-weight:700;color:var(--navy)}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.hamburger{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);background:#fff;cursor:pointer;color:var(--navy)}
+.page{padding:22px;display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:.5;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ────────────────────────────────────────────────────────────── */
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:18px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:700;color:var(--navy)}
+
+/* ── STATS ────────────────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:var(--r);padding:14px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:11px}
+.stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-icon svg{width:20px;height:20px}
+.stat-value{font-size:22px;font-weight:800;color:var(--navy);line-height:1.1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3}
+.stat-icon.orange{background:rgba(232,93,38,.1);color:var(--accent)}
+.stat-icon.blue{background:rgba(59,130,246,.1);color:var(--info)}
+.stat-icon.green{background:rgba(34,197,94,.1);color:var(--success)}
+.stat-icon.purple{background:rgba(168,85,247,.1);color:#a855f7}
+
+/* ── QUICK ACTIONS ────────────────────────────────────────────────────── */
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.quick-btn{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px 8px;text-align:center;cursor:pointer;transition:all .18s;user-select:none}
+.quick-btn:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(232,93,38,.12)}
+.quick-btn:active{transform:scale(.97)}
+.quick-btn .icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 7px}
+.quick-btn .label{font-size:11px;font-weight:600;color:var(--navy);line-height:1.3}
+
+/* ── CHARTS ───────────────────────────────────────────────────────────── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.chart-card{background:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.chart-card .chart-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px}
+
+/* ── TABLES ───────────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;background:var(--sf2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbff}
+
+/* ── DOC CARDS (mobile) ───────────────────────────────────────────────── */
+.doc-cards{display:none}
+.doc-card{background:#fff;border-radius:var(--r);padding:13px 15px;margin-bottom:9px;box-shadow:var(--sh);border-left:3.5px solid var(--accent)}
+.doc-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px}
+.doc-card-num{font-size:13px;font-weight:700;color:var(--navy)}
+.doc-card-amount{font-size:15px;font-weight:800;color:var(--accent)}
+.doc-card-customer{font-size:12px;color:var(--muted);margin-bottom:9px}
+.doc-card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.doc-card-actions{display:flex;gap:5px}
+
+/* ── BADGES ───────────────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.badge-draft{background:#f1f5f9;color:#64748b}
+.badge-sent{background:#dbeafe;color:#1d4ed8}
+.badge-paid{background:#dcfce7;color:#15803d}
+.badge-cancelled{background:#fee2e2;color:#b91c1c}
+.badge-approved{background:#dcfce7;color:#15803d}
+.badge-rejected{background:#fee2e2;color:#b91c1c}
+.badge-invoice{background:rgba(232,93,38,.1);color:var(--accent)}
+.badge-receipt{background:#dcfce7;color:#15803d}
+.badge-quotation{background:#dbeafe;color:#1d4ed8}
+.badge-damage_report{background:#fef3c7;color:#92400e}
+
+/* ── MODAL ────────────────────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,20,50,.52);backdrop-filter:blur(3px);z-index:500;display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:93vh;overflow-y:auto;box-shadow:var(--shl);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0}
+.modal-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:10}
+.modal-header h3{font-size:15px;font-weight:700;color:var(--navy)}
+.modal-close{width:28px;height:28px;border-radius:7px;border:none;background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:15px;font-family:'Poppins',sans-serif}
+.modal-body{padding:16px 18px}
+.modal-footer{padding:12px 18px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);position:sticky;bottom:0;background:#fff;flex-wrap:wrap}
+
+/* ── ITEMS TABLE ──────────────────────────────────────────────────────── */
+.items-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--rs)}
+.items-table{width:100%;border-collapse:collapse;min-width:480px}
+.items-table th{font-size:10px;text-transform:uppercase;color:var(--muted);padding:7px 8px;background:var(--sf2);font-weight:700;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.items-table td{padding:3px;border-bottom:1px solid var(--border)}
+.items-table tr:last-child td{border-bottom:none}
+.items-table .form-control{border:none;border-radius:0;padding:7px 8px;background:transparent;font-size:12px}
+.items-table .form-control:focus{background:#fffaf7;border-radius:5px}
+
+/* ── SHARE MODAL ──────────────────────────────────────────────────────── */
+.share-option{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:11px;border:1.5px solid var(--border);cursor:pointer;transition:all .16s;margin-bottom:8px}
+.share-option:hover,.share-option:active{border-color:var(--accent);background:var(--accent-bg)}
+.share-option .so-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.share-option .so-title{font-size:13px;font-weight:700;color:var(--navy)}
+.share-option .so-desc{font-size:11px;color:var(--muted);margin-top:1px}
+.share-doc-info{background:var(--sf2);border-radius:10px;padding:12px 14px;margin-bottom:16px;border:1px solid var(--border)}
+.share-doc-info .sdi-num{font-size:13px;font-weight:700;color:var(--navy)}
+.share-doc-info .sdi-amt{font-size:20px;font-weight:800;color:var(--accent);margin-top:2px}
+
+/* ── SEARCH BAR ───────────────────────────────────────────────────────── */
+.search-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-input-wrap{position:relative;flex:1;min-width:160px}
+.search-input-wrap .s-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;display:flex}
+.search-input-wrap input{padding-left:35px}
+
+/* ── ALERTS ───────────────────────────────────────────────────────────── */
+.alert{padding:10px 13px;border-radius:var(--rs);font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.alert-error{background:#fee2e2;color:#b91c1c}
+.alert-success{background:#dcfce7;color:#15803d}
+.alert-info{background:#dbeafe;color:#1d4ed8}
+
+/* ── SPINNER / EMPTY ──────────────────────────────────────────────────── */
+.spinner{width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .65s linear infinite;margin:36px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty-state{text-align:center;padding:44px 20px}
+.empty-state svg{width:52px;height:52px;color:var(--light);margin-bottom:12px}
+.empty-state h3{font-size:15px;color:var(--text);margin-bottom:6px}
+.empty-state p{color:var(--muted);font-size:12px}
+
+/* ── UPLOAD ───────────────────────────────────────────────────────────── */
+.upload-area{border:2px dashed var(--border);border-radius:var(--rs);padding:18px;text-align:center;cursor:pointer;transition:all .18s}
+.upload-area:hover{border-color:var(--accent);background:rgba(232,93,38,.02)}
+.upload-area p{color:var(--muted);font-size:12px}
+
+/* ── TOAST ────────────────────────────────────────────────────────────── */
+.toast-container{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;width:calc(100% - 32px);max-width:360px;pointer-events:none}
+.toast{background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shl);animation:slideUp .25s ease;display:flex;align-items:center;gap:8px;width:100%;pointer-events:auto}
+.toast.success{background:#166534}
+.toast.error{background:#991b1b}
+.toast.warning{background:#78350f}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ── BOTTOM NAV ───────────────────────────────────────────────────────── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bn);background:#fff;border-top:1px solid var(--border);z-index:150;box-shadow:0 -4px 16px rgba(26,39,68,.08)}
+.bottom-nav-inner{display:flex;height:100%;align-items:stretch}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .18s;padding-bottom:4px;user-select:none}
+.bnav-item svg{width:20px;height:20px;transition:stroke .18s}
+.bnav-item.active{color:var(--accent)}
+.bnav-create{color:#fff!important;background:var(--accent);border-radius:16px;margin:8px 4px;flex:none;width:52px;height:46px;box-shadow:0 3px 12px rgba(232,93,38,.4)}
+
+/* ── SETTINGS ─────────────────────────────────────────────────────────── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ── DESKTOP ≥ 768 ────────────────────────────────────────────────────── */
+@media(min-width:768px){
+  .modal-overlay{align-items:center;padding:20px}
+  .modal{border-radius:16px;max-width:700px;max-height:88vh}
+  .modal-handle{display:none}
+  .toast-container{bottom:22px;left:auto;right:22px;transform:none;width:auto;min-width:280px;align-items:flex-end}
+}
+
+/* ── MOBILE < 768 ─────────────────────────────────────────────────────── */
+@media(max-width:767px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding-bottom:var(--bn)}
+  .hamburger{display:flex}
+  .topbar{padding:0 14px;height:52px}
+  .topbar h2{font-size:15px}
+  .page{padding:12px}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .stat-card{padding:12px;gap:9px}
+  .stat-icon{width:36px;height:36px;border-radius:9px}
+  .stat-icon svg{width:17px;height:17px}
+  .stat-value{font-size:17px}
+  .stat-label{font-size:10px}
+  .quick-actions{grid-template-columns:1fr 1fr;gap:8px}
+  .quick-btn{padding:12px 6px}
+  .quick-btn .icon{width:34px;height:34px;margin-bottom:5px}
+  .quick-btn .label{font-size:10px}
+  .charts-grid{grid-template-columns:1fr;gap:10px}
+  .settings-grid{grid-template-columns:1fr}
+  .form-row.c2{grid-template-columns:1fr}
+  .form-row.c3{grid-template-columns:1fr 1fr}
+  .table-desktop{display:none}
+  .doc-cards{display:block}
+  .bottom-nav{display:block}
+  .card{padding:13px}
+  .chart-card{padding:13px}
+  .modal-body{padding:13px 15px}
+  .modal-footer{padding:11px 15px}
+  .modal-header{padding:12px 15px}
+  .acc-chart-col{grid-column:span 1!important}
+  .form-section{padding:12px}
+}
+@media(max-width:380px){
+  .auth-card{padding:24px 15px}
+  .stat-value{font-size:15px}
+}
+/* ── New feature styles ───────────────────────────────────────────────────── */
+.badge-partial{background:#fef3c7;color:#92400e}
+.badge-unpaid{background:#fee2e2;color:#b91c1c}
+.badge-overdue{background:#fee2e2;color:#b91c1c;animation:pulse-badge 2s infinite}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.7}}
+.cat-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:all .16s;cursor:pointer}
+.cat-item:hover{border-color:var(--accent);background:rgba(232,93,38,.02)}
+.cat-item-icon{width:38px;height:38px;border-radius:9px;background:rgba(232,93,38,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.cat-item-info{flex:1;min-width:0}
+.cat-item-name{font-size:13px;font-weight:700;color:var(--navy)}
+.cat-item-desc{font-size:11px;color:var(--muted);margin-top:1px}
+.cat-item-price{font-size:14px;font-weight:800;color:var(--accent);white-space:nowrap}
+.cat-item-actions{display:flex;gap:5px;flex-shrink:0}
+.overdue-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fef2f2;border-radius:8px;margin-bottom:6px;flex-wrap:wrap;gap:6px}
+.exp-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.exp-row:last-child{border-bottom:none}
+.tpl-item-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;align-items:center;margin-bottom:6px}
+#signature-canvas{height:180px;display:block}
+.onboarding-step{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:all .18s;text-decoration:none;color:inherit}
+.onboarding-step:hover{border-color:var(--accent);background:rgba(232,93,38,.02);transform:translateX(2px)}
+.onboarding-step.done{border-color:#bbf7d0;background:#f0fdf4;cursor:default}
+.onboarding-step.done:hover{transform:none}
+.ob-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ob-icon.done{background:#dcfce7}.ob-icon.pending{background:var(--sf2)}
+.ob-body{flex:1;min-width:0}
+.ob-title{font-size:13px;font-weight:700;color:var(--navy)}
+.ob-title.done{color:var(--muted);text-decoration:line-through}
+.ob-hint{font-size:11px;color:var(--muted);margin-top:2px}
+.ob-check{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.ob-check.done{background:#dcfce7;color:#166534}.ob-check.pending{background:var(--border);color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ──────────────────────────────────────────────────────────────── -->
+<div id="auth-screen" style="display:flex">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="28" height="28"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+      <h1>RepairBiz</h1><p>Professional Invoicing</p>
+    </div>
+    <div id="auth-main">
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="showAuthTab('login')">Sign In</div>
+        <div class="auth-tab" onclick="showAuthTab('register')">Register</div>
+      </div>
+      <div id="auth-error" class="alert alert-error" style="display:none"></div>
+      <div id="tab-login">
+        <div class="form-group"><label class="form-label">Email Address</label><input type="email" id="login-email" class="form-control" placeholder="you@business.com" autocomplete="email"></div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">Password<span onclick="showForgotPassword()" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:500">Forgot password?</span></label>
+          <input type="password" id="login-password" class="form-control" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doLogin()" id="login-btn" style="margin-top:4px">Sign In to Dashboard</button>
+      </div>
+      <div id="tab-register" style="display:none">
+        <div class="form-row c2">
+          <div class="form-group"><label class="form-label">Business Name <span class="req">*</span></label><input type="text" id="reg-biz" class="form-control" placeholder="My Repair Shop"></div>
+          <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="reg-phone" class="form-control" placeholder="+27 ..."></div>
+        </div>
+        <div class="form-group"><label class="form-label">Email <span class="req">*</span></label><input type="email" id="reg-email" class="form-control" placeholder="you@business.com"></div>
+        <div class="form-group"><label class="form-label">Password <span class="req">*</span></label><input type="password" id="reg-password" class="form-control" placeholder="Min 6 characters"></div>
+        <div class="form-group"><label class="form-label">Address</label><input type="text" id="reg-address" class="form-control" placeholder="123 Main St, City"></div>
+        <button class="btn btn-primary btn-full" onclick="doRegister()" id="reg-btn" style="margin-top:4px">Create Account &amp; Get Code</button>
+      </div>
+    </div>
+    <div id="auth-verify" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:56px;height:56px;background:var(--accent-bg);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px">📧</div>
+        <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px">Check your email</h2>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6">We sent a 6-digit code to<br><strong id="verify-email-display" style="color:var(--navy)"></strong></p>
+      </div>
+      <div id="auth-verify-error" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label" style="text-align:center;display:block">Enter Verification Code</label>
+        <input type="text" id="otp-input" class="form-control" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+          style="text-align:center;font-size:28px;font-weight:800;letter-spacing:8px;padding:14px"
+          oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);if(this.value.length===6)doVerifyEmail()"
+          onkeydown="if(event.key==='Enter')doVerifyEmail()">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doVerifyEmail()" id="verify-btn" style="margin-bottom:12px">Verify &amp; Start Free Trial</button>
+      <div style="text-align:center">
+        <p style="font-size:12px;color:var(--muted)">Didn't get the code?
+          <button onclick="doResendOtp()" id="resend-btn" class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 10px">Resend Code</button>
+        </p>
+        <p style="font-size:11px;color:var(--pale);margin-top:6px">Check spam. Code expires in 15 minutes.</p>
+        <button onclick="showAuthMain()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:8px">← Back to Sign In</button>
+      </div>
+    </div>
+    <div id="auth-forgot" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:56px;height:56px;background:#fef3c7;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px">🔑</div>
+        <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px">Reset Password</h2>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6">Enter your email and we'll send a reset code</p>
+      </div>
+      <div id="auth-forgot-error" class="alert alert-error" style="display:none"></div>
+      <div id="forgot-step-1">
+        <div class="form-group"><label class="form-label">Email Address</label><input type="email" id="forgot-email" class="form-control" placeholder="you@business.com" onkeydown="if(event.key==='Enter')doForgotPassword()"></div>
+        <button class="btn btn-primary btn-full" onclick="doForgotPassword()" id="forgot-btn">Send Reset Code</button>
+      </div>
+      <div id="forgot-step-2" style="display:none">
+        <div class="form-group">
+          <label class="form-label" style="text-align:center;display:block">Enter Reset Code</label>
+          <input type="text" id="reset-otp" class="form-control" placeholder="000000" maxlength="6" inputmode="numeric"
+            style="text-align:center;font-size:28px;font-weight:800;letter-spacing:8px;padding:14px"
+            oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)">
+        </div>
+        <div class="form-group"><label class="form-label">New Password</label><input type="password" id="reset-new-password" class="form-control" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doResetPassword()"></div>
+        <button class="btn btn-primary btn-full" onclick="doResetPassword()" id="reset-btn">Set New Password</button>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="showAuthMain()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer">← Back to Sign In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP ────────────────────────────────────────────────────────────────── -->
+<div id="app">
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="18" height="18"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+      <div><h2>RepairBiz</h2><p>Service Manager</p></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">Main</div>
+        <div class="nav-item active" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+        <div class="nav-item" onclick="navigate('documents')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Documents</div>
+        <div class="nav-item" onclick="navigate('customers')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Customers</div>
+        <div class="nav-item" onclick="navigate('catalogue')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Services &amp; Parts</div>
+        <div class="nav-item" onclick="navigate('accounting')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Accounting</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Create</div>
+        <div class="nav-item" onclick="openCreateDoc('invoice')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>New Invoice</div>
+        <div class="nav-item" onclick="openCreateDoc('receipt')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>New Receipt</div>
+        <div class="nav-item" onclick="openCreateDoc('quotation')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>New Quotation</div>
+        <div class="nav-item" onclick="openCreateDoc('damage_report')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Damage Report</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Account</div>
+        <div class="nav-item" onclick="navigate('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
+        <div class="nav-item" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="biz-badge">
+        <div class="biz-avatar" id="sidebar-avatar">R</div>
+        <div class="biz-info"><div class="biz-name" id="sidebar-biz-name">Loading...</div><div class="biz-email" id="sidebar-email">...</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <h2 id="topbar-title">Dashboard</h2>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+
+    <!-- SUBSCRIPTION EXPIRED / PAUSED SCREEN -->
+    <div id="subscription-wall" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#1a2744 0%,#2d4a8a 60%,#1e3470 100%);align-items:center;justify-content:center;padding:16px">
+      <div style="background:#fff;border-radius:20px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.35)">
+
+        <!-- Icon + title -->
+        <div style="width:64px;height:64px;background:#fff3cd;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px">⏰</div>
+        <h2 id="wall-title" style="font-size:20px;font-weight:800;color:#1a2744;margin-bottom:8px">Your trial has ended</h2>
+        <p id="wall-sub" style="font-size:13px;color:#6b7a99;line-height:1.65;margin-bottom:20px">Get a license code from StanleyBytes to activate your subscription and keep invoicing.</p>
+
+        <!-- Code entry — the main action -->
+        <div style="background:#f5f7fa;border-radius:14px;padding:20px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#1a2744;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Enter Your License Code</div>
+          <input id="license-code-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
+            style="width:100%;padding:13px;border:2px solid #e3e7f0;border-radius:10px;font-family:'Poppins',sans-serif;font-size:15px;text-align:center;letter-spacing:.12em;text-transform:uppercase;outline:none;transition:border-color .2s;margin-bottom:10px;font-weight:600"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
+            onkeydown="if(event.key==='Enter')activateLicense()">
+          <button onclick="activateLicense()" id="license-btn"
+            style="width:100%;padding:13px;background:#1a2744;color:#fff;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s">
+            🔑 Activate License
+          </button>
+          <div id="license-msg" style="font-size:13px;margin-top:10px;min-height:18px;font-weight:500"></div>
+        </div>
+
+        <!-- Contact hint -->
+        <div style="font-size:12px;color:#a0aec0;margin-bottom:18px;line-height:1.7">
+          Don't have a code? Contact <strong style="color:#1a2744">StanleyBytes</strong><br>
+          <a href="https://wa.me/27611440669" style="color:#0d9f6f;font-weight:600">WhatsApp: 061 144 0669</a>
+          &nbsp;·&nbsp;
+          <a href="mailto:info@stanleybytes.co.za" style="color:#0f5fff;font-weight:600">Email Us</a>
+        </div>
+
+        <!-- Footer links -->
+        <div style="display:flex;gap:8px">
+          <a href="/" style="flex:1;padding:10px;background:#f5f7fa;border-radius:9px;font-size:13px;font-weight:600;color:#4a5e6e;text-align:center;text-decoration:none">← Website</a>
+          <button onclick="doLogout()" style="flex:1;padding:10px;background:transparent;border:1.5px solid #e3e7f0;border-radius:9px;font-size:13px;font-weight:600;color:#6b7a99;cursor:pointer">Sign Out</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div id="overdue-panel" style="display:none;background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px;border:2px solid #fca5a5">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">⚠️</span><span id="overdue-title" style="font-size:14px;font-weight:700;color:#b91c1c"></span></div>
+          <span id="overdue-total" style="font-size:16px;font-weight:800;color:#b91c1c"></span>
+        </div>
+        <div id="overdue-list"></div>
+      </div>
+
+      <!-- Onboarding checklist — shown to new users until setup is complete -->
+      <div id="onboarding-panel" style="display:none;background:#fff;border-radius:16px;border:2px solid var(--navy);overflow:hidden;margin-bottom:18px">
+        <div style="background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#fff">👋 Welcome to RepairBiz!</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px">Complete these 5 steps to get set up. Takes about 5 minutes.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="text-align:right">
+              <div id="onboarding-fraction" style="font-size:13px;font-weight:700;color:#fff"></div>
+              <div style="width:80px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin-top:4px;overflow:hidden">
+                <div id="onboarding-bar" style="height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease"></div>
+              </div>
+            </div>
+            <button onclick="dismissOnboarding()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.5);font-size:18px;width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Dismiss">✕</button>
+          </div>
+        </div>
+        <div id="onboarding-steps" style="padding:12px 16px;display:grid;gap:8px"></div>
+        <div id="onboarding-complete" style="display:none;padding:20px;text-align:center">
+          <div style="font-size:28px;margin-bottom:8px">🎉</div>
+          <div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:4px">You're all set!</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:14px">RepairBiz is ready to go. Create your first document and send it to a customer.</div>
+          <button class="btn btn-primary" onclick="openCreateDoc('invoice');dismissOnboarding()">Create First Invoice →</button>
+        </div>
+      </div>
+      <div id="welcome-banner" style="background:#fff;border-radius:14px;padding:18px 22px;margin-bottom:18px;border:1px solid #e3e7f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div id="welcome-text" style="font-size:18px;font-weight:800;color:#1a2744"></div>
+        </div>
+        <div id="welcome-actions" style="display:flex;gap:8px"></div>
+      </div>
+      <!-- Trial countdown bar — shown only during trial -->
+      <div id="trial-bar" style="display:none;border-radius:12px;padding:14px 18px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap">
+        <div id="trial-bar-left" style="flex:1;min-width:0"></div>
+        <div id="trial-bar-right" style="display:flex;align-items:center;gap:8px;flex-shrink:0"></div>
+      </div>
+      <div class="stats-grid" id="stats-grid"><div class="loading-state" style="grid-column:span 4"><div class="spinner"></div></div></div>
+      <div class="quick-actions">
+        <div class="quick-btn" onclick="openCreateDoc('invoice')"><div class="icon" style="background:rgba(232,93,38,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#e85d26" stroke-width="2" width="19"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div><div class="label">Invoice</div></div>
+        <div class="quick-btn" onclick="openCreateDoc('receipt')"><div class="icon" style="background:rgba(34,197,94,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" width="19"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg></div><div class="label">Receipt</div></div>
+        <div class="quick-btn" onclick="openCreateDoc('quotation')"><div class="icon" style="background:rgba(59,130,246,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="19"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="label">Quotation</div></div>
+        <div class="quick-btn" onclick="openCreateDoc('damage_report')"><div class="icon" style="background:rgba(245,158,11,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="19"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div class="label">Report</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-title">Revenue (6 Months)</div><canvas id="revenue-chart"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Documents Created</div><canvas id="docs-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recent Documents</span>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('documents')">View All →</button>
+        </div>
+        <div id="recent-docs-wrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="page" id="page-documents">
+      <div class="card" style="margin-bottom:12px">
+        <div class="search-bar">
+          <div class="search-input-wrap" style="flex:2;min-width:140px">
+            <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="search" class="form-control" id="doc-search" placeholder="Search doc, customer, phone..." oninput="loadDocuments()">
+          </div>
+          <select class="form-control" id="doc-filter-type" onchange="loadDocuments()" style="width:120px;flex-shrink:0">
+            <option value="">All Types</option>
+            <option value="invoice">Invoice</option><option value="receipt">Receipt</option>
+            <option value="quotation">Quotation</option><option value="damage_report">Report</option>
+          </select>
+          <select class="form-control" id="doc-filter-month" onchange="loadDocuments()" style="width:110px;flex-shrink:0">
+            <option value="">All Months</option>
+            <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+            <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+          </select>
+          <select class="form-control" id="doc-filter-year" onchange="loadDocuments()" style="width:95px;flex-shrink:0">
+            <option value="">All Years</option>
+            <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="clearDocFilters()" style="flex-shrink:0">Clear</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Documents</span>
+          <span id="doc-count" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <!-- Desktop table -->
+        <div class="table-wrap table-desktop" id="documents-table"><div class="spinner"></div></div>
+        <!-- Mobile cards -->
+        <div class="doc-cards" id="documents-cards"></div>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="card" style="margin-bottom:12px">
+        <div class="search-bar">
+          <div class="search-input-wrap" style="flex:1;min-width:150px">
+            <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="search" class="form-control" id="cust-search" placeholder="Search name, phone, email..." oninput="loadCustomers()">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openSaveCustomer()">+ Add Customer</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Saved Customers</span></div>
+        <div id="customers-list"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- CATALOGUE -->
+    <div class="page" id="page-catalogue">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <span class="card-title">Services &amp; Parts Catalogue</span>
+          <button class="btn btn-primary btn-sm" onclick="openCatalogueItem()">+ Add Item</button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Save common services and parts. Tap any item when creating a document to add it instantly. Create your own categories to fit your business.</p>
+        <div class="search-bar" style="margin-bottom:12px">
+          <div class="search-input-wrap" style="flex:1">
+            <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="search" class="form-control" id="cat-search" placeholder="Search items..." oninput="renderCatalogueList()">
+          </div>
+          <select class="form-control" id="cat-filter-category" onchange="renderCatalogueList()" style="width:150px"><option value="">All Categories</option></select>
+        </div>
+        <div id="catalogue-list"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ACCOUNTING -->
+    <div class="page" id="page-accounting">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <select class="form-control" id="acc-year" onchange="loadAccounting()" style="width:105px">
+          <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+        </select>
+        <div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">
+          <button class="btn" id="acc-tab-revenue" onclick="switchAccTab('revenue')" style="border-radius:0;border:none;background:var(--accent);color:#fff;font-size:12px">Revenue</button>
+          <button class="btn" id="acc-tab-expenses" onclick="switchAccTab('expenses')" style="border-radius:0;border:none;background:#fff;color:var(--muted);font-size:12px">Expenses</button>
+          <button class="btn" id="acc-tab-profit" onclick="switchAccTab('profit')" style="border-radius:0;border:none;background:#fff;color:var(--muted);font-size:12px">Profit</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openExpenseModal()" style="margin-left:auto">+ Add Expense</button>
+      </div>
+      <div id="acc-pane-revenue">
+        <div class="stats-grid" id="acc-totals"></div>
+        <div class="charts-grid" style="margin-top:14px"><div class="chart-card acc-chart-col" style="grid-column:span 2"><div class="chart-title" style="margin-bottom:10px">Monthly Revenue</div><canvas id="acc-chart"></canvas></div></div>
+        <div class="card" style="margin-top:12px"><div class="card-header"><span class="card-title">Monthly Breakdown</span></div><div class="table-wrap" id="acc-table"></div></div>
+      </div>
+      <div id="acc-pane-expenses" style="display:none">
+        <div class="stats-grid" id="acc-expense-totals"></div>
+        <div class="card" style="margin-top:12px"><div class="card-header"><span class="card-title">All Expenses</span><button class="btn btn-primary btn-sm" onclick="openExpenseModal()">+ Add Expense</button></div><div class="table-wrap" id="acc-expense-table"></div></div>
+      </div>
+      <div id="acc-pane-profit" style="display:none">
+        <div class="stats-grid" id="acc-profit-totals"></div>
+        <div class="charts-grid" style="margin-top:14px"><div class="chart-card acc-chart-col" style="grid-column:span 2"><div class="chart-title" style="margin-bottom:10px">Revenue vs Expenses</div><canvas id="acc-profit-chart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="settings-grid">
+        <div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><span class="card-title">Business Info</span></div>
+            <div class="form-group"><label class="form-label">Business Name</label><input type="text" class="form-control" id="s-biz-name"></div>
+            <div class="form-row c2">
+              <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-control" id="s-phone"></div>
+              <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="s-email" readonly style="background:var(--sf2);color:var(--muted)"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Address</label><textarea class="form-control" id="s-address" rows="2"></textarea></div>
+            <div class="form-group">
+              <label class="form-label">Logo</label>
+              <div class="upload-area" onclick="document.getElementById('logo-upload').click()">
+                <img id="logo-preview" src="" style="max-height:52px;display:none;margin-bottom:6px;border-radius:6px">
+                <p>Tap to upload logo (PNG/JPG)</p>
+              </div>
+              <input type="file" id="logo-upload" accept="image/*" style="display:none" onchange="uploadLogo(this)">
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Business Info</button>
+          </div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><span class="card-title">🎨 PDF Customisation</span></div>
+            <div class="form-row c2">
+              <div class="form-group">
+                <label class="form-label">Accent Colour</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input type="color" id="s-accent-color" value="#1a2233" oninput="document.getElementById('s-accent-color-hex').value=this.value;document.getElementById('pdf-accent-bar').style.background=this.value" style="width:42px;height:36px;padding:2px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer">
+                  <input type="text" class="form-control" id="s-accent-color-hex" placeholder="#1a2233" style="font-family:monospace;font-size:13px" oninput="syncColorHex(this.value)">
+                </div>
+                <p style="font-size:11px;color:var(--muted);margin-top:5px">Used on PDF header and table lines</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Footer Message</label>
+                <input type="text" class="form-control" id="s-footer-message" placeholder="Thank you for your business.">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="s-show-signature" style="width:16px;height:16px;accent-color:var(--accent)">
+                Include signature line on all PDFs
+              </label>
+            </div>
+            <div id="pdf-preview-bar" style="margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+              <div id="pdf-accent-bar" style="height:6px;background:#1a2233;transition:background .2s"></div>
+              <div style="padding:8px 14px;background:var(--sf2);font-size:11px;color:var(--muted)">PDF accent preview</div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:12px" onclick="saveSettings()">Save PDF Settings</button>
+          </div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><span class="card-title">🔢 Document Numbering</span></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Customise your document number format. Use <code style="background:var(--sf2);padding:1px 5px;border-radius:4px">{PREFIX}</code>, <code style="background:var(--sf2);padding:1px 5px;border-radius:4px">{YEAR}</code>, <code style="background:var(--sf2);padding:1px 5px;border-radius:4px">{N:05d}</code> as placeholders.</p>
+            <div class="form-row c2">
+              <div class="form-group"><label class="form-label">Invoice Prefix</label><input type="text" class="form-control" id="s-inv-prefix" placeholder="INV" maxlength="10"></div>
+              <div class="form-group"><label class="form-label">Receipt Prefix</label><input type="text" class="form-control" id="s-rec-prefix" placeholder="REC" maxlength="10"></div>
+            </div>
+            <div class="form-row c2">
+              <div class="form-group"><label class="form-label">Quotation Prefix</label><input type="text" class="form-control" id="s-quo-prefix" placeholder="QUO" maxlength="10"></div>
+              <div class="form-group"><label class="form-label">Report Prefix</label><input type="text" class="form-control" id="s-rep-prefix" placeholder="REP" maxlength="10"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Number Format</label>
+              <input type="text" class="form-control" id="s-doc-format" placeholder="{PREFIX}-{N:05d}" oninput="updateFormatPreview()">
+              <div id="format-preview" style="font-size:12px;color:var(--accent);margin-top:5px;font-weight:600;font-family:monospace"></div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Numbering</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Change Password</span></div>
+            <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-control" id="s-cur-pass"></div>
+            <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-control" id="s-new-pass"></div>
+            <button class="btn btn-navy" onclick="changePassword()">Update Password</button>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-header"><span class="card-title">🔑 License &amp; Subscription</span></div>
+            <div id="settings-plan-info" style="background:var(--sf2);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--muted)">Loading…</div>
+            <div class="form-group">
+              <label class="form-label">Enter License Code</label>
+              <input type="text" class="form-control" id="settings-license-input" placeholder="XXXX-XXXX-XXXX-XXXX"
+                style="text-transform:uppercase;letter-spacing:.08em;font-size:14px;font-weight:600;text-align:center"
+                oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
+                onkeydown="if(event.key==='Enter')activateLicenseFromSettings()">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="activateLicenseFromSettings()">Activate License Code</button>
+            <div id="settings-license-msg" style="font-size:13px;margin-top:8px;min-height:16px;font-weight:500"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><span class="card-title">Banking Details</span></div>
+            <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-control" id="s-bank-name" placeholder="FNB, ABSA, Standard Bank..."></div>
+            <div class="form-group"><label class="form-label">Account Holder</label><input type="text" class="form-control" id="s-bank-holder"></div>
+            <div class="form-row c2">
+              <div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-control" id="s-bank-acc"></div>
+              <div class="form-group"><label class="form-label">Branch Code</label><input type="text" class="form-control" id="s-bank-branch"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Reference</label><input type="text" class="form-control" id="s-bank-ref"></div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Banking</button>
+          </div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><span class="card-title">Terms &amp; Conditions</span></div>
+            <div class="form-group"><textarea class="form-control" id="s-terms" rows="7"></textarea></div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Terms</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📋 Job Templates</span><button class="btn btn-primary btn-sm" onclick="openTemplateModal()">+ New Template</button></div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Save common jobs with pre-filled items. Apply when creating any document.</p>
+            <div id="templates-list"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /main -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <div class="bnav-item active" id="bnav-dashboard" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home</div>
+      <div class="bnav-item" id="bnav-documents" onclick="navigate('documents')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Docs</div>
+      <div class="bnav-item bnav-create" onclick="showCreateMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+      <div class="bnav-item" id="bnav-accounting" onclick="navigate('accounting')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Money</div>
+      <div class="bnav-item" id="bnav-settings" onclick="navigate('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
+    </div>
+  </nav>
+</div><!-- /app -->
+
+<!-- ── MODAL: Create Menu ────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="create-menu-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>Create New</h3><button class="modal-close" onclick="closeModal('create-menu-modal')">✕</button></div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="quick-btn" onclick="openCreateDoc('invoice')"><div class="icon" style="background:rgba(232,93,38,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#e85d26" stroke-width="2" width="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div><div class="label">Invoice</div></div>
+      <div class="quick-btn" onclick="openCreateDoc('receipt')"><div class="icon" style="background:rgba(34,197,94,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" width="22"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg></div><div class="label">Receipt</div></div>
+      <div class="quick-btn" onclick="openCreateDoc('quotation')"><div class="icon" style="background:rgba(59,130,246,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="22"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="label">Quotation</div></div>
+      <div class="quick-btn" onclick="openCreateDoc('damage_report')"><div class="icon" style="background:rgba(245,158,11,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" width="22"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div class="label">Damage Report</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Doc Create/Edit ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="doc-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="modal-title">New Invoice</h3><button class="modal-close" onclick="closeModal('doc-modal')">✕</button></div>
+    <div class="modal-body" id="doc-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('doc-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDocument()" id="save-doc-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: View Document ───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="view-modal">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="view-modal-title">Document</h3><button class="modal-close" onclick="closeModal('view-modal')">✕</button></div>
+    <div class="modal-body" id="view-modal-body"></div>
+    <div class="modal-footer" id="view-modal-footer"></div>
+  </div>
+</div>
+
+<!-- ── MODAL: Share / Download PDF ───────────────────────────────────────── -->
+<div class="modal-overlay" id="share-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>📄 Document Ready</h3>
+      <button class="modal-close" onclick="closeModal('share-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="share-doc-info">
+        <div class="sdi-num" id="share-doc-name">Invoice</div>
+        <div class="sdi-amt" id="share-doc-amount">R 0.00</div>
+      </div>
+
+      <div class="share-option" onclick="shareAction('native')">
+        <div class="so-icon" style="background:linear-gradient(135deg,#25d366,#128c7e)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+        <div>
+          <div class="so-title">Share via App</div>
+          <div class="so-desc">WhatsApp, Telegram, Drive, etc.</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="share-option" onclick="shareAction('email')">
+        <div class="so-icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div>
+          <div class="so-title">Email</div>
+          <div class="so-desc">Opens your email app with PDF</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="share-option" onclick="shareAction('open')">
+        <div class="so-icon" style="background:linear-gradient(135deg,#e85d26,#cf4e1e)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div>
+          <div class="so-title">Open PDF</div>
+          <div class="so-desc">View in browser, then share or print</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="share-option" onclick="shareAction('download')">
+        <div class="so-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div>
+          <div class="so-title">Download PDF</div>
+          <div class="so-desc">Save file to your device</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('share-modal')">Later</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Save Customer ───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="cust-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="cust-modal-title">Add Customer</h3><button class="modal-close" onclick="closeModal('cust-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Full Name <span class="req">*</span></label>
+        <input type="text" class="form-control" id="cust-form-name" placeholder="John Doe">
+      </div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-control" id="cust-form-phone" placeholder="+27 82 ..."></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cust-form-email" placeholder="email@domain.com"></div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Address</label><input type="text" class="form-control" id="cust-form-addr" placeholder="Street, City"></div>
+        <div class="form-group"><label class="form-label">Tax Reg No <span style="color:var(--muted);font-weight:400;font-size:11px">(optional)</span></label><input type="text" class="form-control" id="cust-form-tax" placeholder="4012345678"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" id="cust-form-notes" rows="2" placeholder="Regular customer, preferred contact method..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('cust-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Save Customer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Record Payment ───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>💳 Record Payment</h3><button class="modal-close" onclick="closeModal('payment-modal')">✕</button></div>
+    <div class="modal-body">
+      <div id="payment-doc-info" style="background:var(--sf2);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border)"></div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Amount Received (R) <span class="req">*</span></label><input type="number" class="form-control" id="pay-amount" placeholder="0.00" min="0.01" step="0.01" style="font-size:18px;font-weight:700;color:var(--accent)"></div>
+        <div class="form-group"><label class="form-label">Payment Method</label>
+          <select class="form-control" id="pay-method"><option value="cash">💵 Cash</option><option value="eft">🏦 EFT</option><option value="card">💳 Card</option><option value="snapscan">📱 SnapScan</option><option value="zapper">📱 Zapper</option><option value="other">Other</option></select>
+        </div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Date Received</label><input type="date" class="form-control" id="pay-date"></div>
+        <div class="form-group"><label class="form-label">Reference / Proof No.</label><input type="text" class="form-control" id="pay-ref" placeholder="EFT ref, receipt no..."></div>
+      </div>
+      <div class="form-group"><label class="form-label">Note <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" class="form-control" id="pay-note" placeholder="e.g. Cash in hand..."></div>
+      <div id="payment-change-box" style="display:none;background:#dcfce7;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:13px;font-weight:700;color:#15803d"></div>
+      <div id="existing-payments" style="margin-top:14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="recordPayment()" id="pay-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+        Record Payment
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Add Expense ──────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="expense-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="expense-modal-title">Add Expense</h3><button class="modal-close" onclick="closeModal('expense-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Description <span class="req">*</span></label><input type="text" class="form-control" id="exp-desc" placeholder="e.g. Capacitors x5, Fuel, Tools..."></div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Amount (R) <span class="req">*</span></label><input type="number" class="form-control" id="exp-amount" placeholder="0.00" min="0.01" step="0.01"></div>
+        <div class="form-group"><label class="form-label">Category</label>
+          <input type="text" class="form-control" id="exp-category" placeholder="Parts, Fuel, Tools..." list="exp-cat-list">
+          <datalist id="exp-cat-list"><option value="Parts"><option value="Fuel"><option value="Tools"><option value="Labour"><option value="Office"><option value="Transport"><option value="Other"></datalist>
+        </div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Vendor / Supplier</label><input type="text" class="form-control" id="exp-vendor" placeholder="Supplier name..."></div>
+        <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control" id="exp-date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-control" id="exp-notes" placeholder="Optional notes..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('expense-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()" id="exp-save-btn">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Job Template ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="template-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="template-modal-title">New Job Template</h3><button class="modal-close" onclick="closeModal('template-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Template Name <span class="req">*</span></label><input type="text" class="form-control" id="tpl-name" placeholder="e.g. Washing Machine Service Call"></div>
+        <div class="form-group"><label class="form-label">Default Document Type</label>
+          <select class="form-control" id="tpl-doc-type"><option value="invoice">Invoice</option><option value="quotation">Quotation</option><option value="receipt">Receipt</option></select>
+        </div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Default VAT (%)</label><input type="number" class="form-control" id="tpl-tax-rate" value="0" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-control" id="tpl-notes" placeholder="Default notes for this job type"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px">
+        <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Items / Services</span>
+        <button class="btn btn-ghost btn-sm" onclick="addTemplateItem()">+ Add Item</button>
+      </div>
+      <div id="tpl-items-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('template-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTemplate()" id="tpl-save-btn">Save Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Apply Template ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="template-picker-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>Apply Job Template</h3><button class="modal-close" onclick="closeModal('template-picker-modal')">✕</button></div>
+    <div class="modal-body"><p style="font-size:13px;color:var(--muted);margin-bottom:14px">Select a template to pre-fill this document.</p><div id="template-picker-list"></div></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('template-picker-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ── MODAL: Signature ───────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="signature-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>✍️ Customer Signature</h3><button class="modal-close" onclick="closeModal('signature-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Ask the customer to sign below. The signature will be embedded in the PDF.</p>
+      <canvas id="signature-canvas" style="width:100%;border:2px solid var(--border);border-radius:10px;cursor:crosshair;background:#fff;touch-action:none;display:block"></canvas>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center"><button class="btn btn-ghost btn-sm" onclick="clearSignature()">Clear</button><span style="font-size:11px;color:var(--muted)">Draw signature above</span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('signature-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSignature()" id="sig-save-btn">Save &amp; Embed in PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Catalogue Item ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="cat-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="cat-modal-title">Add Item</h3><button class="modal-close" onclick="closeModal('cat-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Item Name <span class="req">*</span></label><input type="text" class="form-control" id="cat-form-name" placeholder="e.g. Labour, Call-out Fee, Capacitor"></div>
+      <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-control" id="cat-form-desc" placeholder="Short description..."></div>
+      <div class="form-row c2">
+        <div class="form-group"><label class="form-label">Unit Price (R) <span class="req">*</span></label><input type="number" class="form-control" id="cat-form-price" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="form-group">
+          <label class="form-label">Category <span style="font-size:10px;color:var(--muted);font-weight:400">(type your own)</span></label>
+          <input type="text" class="form-control" id="cat-form-category" placeholder="e.g. Labour, Parts..." list="cat-category-list">
+          <datalist id="cat-category-list"><option value="Labour"><option value="Parts"><option value="Call-out"><option value="Diagnostics"><option value="Materials"><option value="Cleaning"><option value="Installation"></datalist>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('cat-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCatalogueItem()" id="cat-save-btn">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Catalogue Picker ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="cat-picker-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>Add from Catalogue</h3><button class="modal-close" onclick="closeModal('cat-picker-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="search-input-wrap" style="margin-bottom:12px">
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="search" class="form-control" id="cat-picker-search" placeholder="Search catalogue..." oninput="renderCatPickerList()" style="padding-left:35px">
+      </div>
+      <div id="cat-picker-list"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('cat-picker-modal')">Done</button></div>
+  </div>
+</div>
+
+<!-- ── MODAL: Convert / Duplicate ────────────────────────────────────────── -->
+<div class="modal-overlay" id="convert-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="convert-modal-title">Duplicate / Convert</h3><button class="modal-close" onclick="closeModal('convert-modal')">✕</button></div>
+    <div class="modal-body" id="convert-modal-body"></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('convert-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ── MODAL: Customer History ───────────────────────────────────────────── -->
+<div class="modal-overlay" id="cust-history-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="cust-history-title">Customer History</h3><button class="modal-close" onclick="closeModal('cust-history-modal')">✕</button></div>
+    <div class="modal-body" id="cust-history-body"></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('cust-history-modal')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

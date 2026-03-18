@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepairBiz Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--ink:#0d1117;--ink2:#1e2d3d;--muted:#4a5e6e;--pale:#8a9bb0;--bg:#f5f7fa;--surface:#fff;--border:#e4e9f0;--accent:#0f5fff;--green:#0d9f6f;--orange:#e8620a;--red:#d93025;--r:10px;--rx:16px;--sh:0 2px 12px rgba(0,0,0,.07)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh}
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--ink);z-index:9999}
+.login-box{background:#fff;border-radius:20px;padding:40px;width:360px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.login-box h1{font-size:22px;font-weight:800;margin-bottom:6px}
+.login-box p{font-size:14px;color:var(--muted);margin-bottom:28px}
+.login-box input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:12px}
+.login-box input:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--ink);color:#fff}.btn-primary:hover{background:#1a2a42}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#0044d6}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--ink)}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{opacity:.85}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{opacity:.85}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sl-name{font-size:16px;font-weight:800;color:#fff}
+.sl-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px}
+.sidebar nav{padding:12px 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;margin-bottom:2px;transition:all .15s}
+.nav-item:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
+.nav-item.active{background:rgba(255,255,255,.09);color:#fff}
+.nav-icon{font-size:16px}
+.sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(255,255,255,.25);line-height:1.6}
+.main{padding:0;overflow:auto}
+.top-bar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.top-bar h1{font-size:17px;font-weight:700;color:var(--ink)}
+.top-bar .badge{padding:4px 12px;background:var(--bg);border-radius:999px;font-size:12px;font-weight:600;color:var(--muted)}
+.page-content{padding:24px 28px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--rx);padding:20px;border:1px solid var(--border)}
+.sc-val{font-size:30px;font-weight:800;letter-spacing:-0.02em;color:var(--ink)}
+.sc-lbl{font-size:12px;color:var(--pale);margin-top:3px;font-weight:500}
+.sc-change{font-size:12px;margin-top:8px;font-weight:600}
+.sc-change.up{color:var(--green)}.sc-change.dn{color:var(--red)}
+.card{background:#fff;border-radius:var(--rx);border:1px solid var(--border);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:700;color:var(--ink)}
+.card-body{padding:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pale);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--ink)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-gray{background:#f1f5f9;color:#64748b}
+.badge-red{background:#fee2e2;color:#dc2626}
+.badge-orange{background:#fff7ed;color:#c2410c}
+.search-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select{font-family:'Sora',sans-serif;font-size:13px}
+.search-input{padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color .2s;width:260px}
+.search-input:focus,.form-control:focus{border-color:var(--accent)}
+.filter-select{padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r);background:#fff;outline:none;cursor:pointer;color:var(--ink);min-width:120px}
+.user-name{font-weight:600;color:var(--ink)}
+.user-email{font-size:11px;color:var(--pale);margin-top:1px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;letter-spacing:.03em}
+.form-control{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2)}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.codes-output{background:#1e2d3d;border-radius:var(--r);padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#7dd3fc;line-height:1.8;margin-top:14px;white-space:pre-wrap;word-break:break-all}
+.user-detail{padding:22px}
+.ud-stat{background:var(--bg);border-radius:var(--r);padding:14px 16px;border:1px solid var(--border);text-align:center}
+.ud-stat .v{font-size:22px;font-weight:800;color:var(--ink)}
+.ud-stat .l{font-size:11px;color:var(--pale);font-weight:500;margin-top:2px}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-row .lbl{color:var(--muted);font-weight:500}
+.info-row .val{font-weight:600;text-align:right;max-width:60%}
+.empty-state{text-align:center;padding:50px 20px;color:var(--pale);font-size:14px}
+.chart-wrap{height:220px;padding:10px}
+@media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:32px;margin-bottom:12px">🛡️</div>
+    <h1>Admin Access</h1>
+    <p>RepairBiz Super Admin Panel</p>
+    <input type="password" id="admin-key-input" placeholder="Enter admin key" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="doLogin()">Access Admin Panel</button>
+    <p id="login-err" style="color:var(--red);font-size:13px;margin-top:10px;display:none">Invalid admin key</p>
+  </div>
+</div>
+
+<!-- Main Layout -->
+<div class="layout" id="app-layout" style="display:none">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sl-name">🛡️ RepairBiz</div>
+      <div class="sl-sub">Super Admin Panel</div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+      <div class="nav-item" onclick="showPage('users')" id="nav-users"><span class="nav-icon">👥</span>Users</div>
+      <div class="nav-item" onclick="showPage('licenses')" id="nav-licenses"><span class="nav-icon">🔑</span>License Codes</div>
+      <div class="nav-item" onclick="showPage('support')" id="nav-support"><span class="nav-icon">💬</span>Support Info</div>
+    </nav>
+    <div class="sidebar-footer">StanleyBytes Admin<br>RepairBiz v2.0</div>
+  </div>
+  <div class="main">
+    <div class="top-bar">
+      <h1 id="page-title">Dashboard</h1>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="badge" id="admin-time"></span>
+        <button class="btn btn-sm btn-outline" onclick="refreshData()">↺ Refresh</button>
+      </div>
+    </div>
+    <div class="page-content">
+
+      <!-- Dashboard Page -->
+      <div id="page-dashboard">
+        <div class="stats-grid" id="stat-grid">
+          <div class="stat-card"><div class="sc-val" id="s-total">—</div><div class="sc-lbl">Total Users</div></div>
+          <div class="stat-card"><div class="sc-val" id="s-active">—</div><div class="sc-lbl">Active Paid</div></div>
+          <div class="stat-card"><div class="sc-val" id="s-trial">—</div><div class="sc-lbl">On Trial</div></div>
+          <div class="stat-card"><div class="sc-val" id="s-today">—</div><div class="sc-lbl">Active Today</div></div>
+          <div class="stat-card"><div class="sc-val" id="s-docs">—</div><div class="sc-lbl">Total Docs Created</div></div>
+          <div class="stat-card"><div class="sc-val" id="s-new">—</div><div class="sc-lbl">New This Month</div></div>
+          <div class="stat-card" style="grid-column:span 2"><div class="sc-val" id="s-rev" style="color:var(--green)">—</div><div class="sc-lbl">Total Revenue Processed</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Signups</div><button class="btn btn-sm btn-outline" onclick="showPage('users')">View All</button></div>
+            <div id="recent-users-list"><div class="empty-state">Loading...</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Expiring Soon (7 days)</div></div>
+            <div id="expiring-users-list"><div class="empty-state">Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Page -->
+      <div id="page-users" style="display:none">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-body">
+            <div class="search-row">
+              <input type="text" class="search-input" id="user-search" placeholder="Search name, email, phone..." oninput="debounceLoadUsers()">
+              <select class="filter-select" id="user-filter-plan" onchange="loadUsers()">
+                <option value="">All Plans</option>
+                <option value="trial">Trial</option>
+                <option value="starter">Starter</option>
+                <option value="pro">Pro</option>
+                <option value="business">Business</option>
+              </select>
+              <select class="filter-select" id="user-filter-status" onchange="loadUsers()">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="trial">On Trial</option>
+                <option value="expired">Expired</option>
+                <option value="suspended">Suspended</option>
+              </select>
+              <select class="filter-select" id="user-sort" onchange="loadUsers()">
+                <option value="created_at">Newest First</option>
+                <option value="business_name">Business Name</option>
+                <option value="last_login_at">Last Login</option>
+                <option value="login_count">Login Count</option>
+              </select>
+              <button class="btn btn-accent btn-sm" onclick="loadUsers()">Search</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">All Users <span id="user-count-badge" style="margin-left:8px;color:var(--muted);font-weight:400;font-size:13px"></span></div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Business</th><th>Plan</th><th>Status</th>
+                <th>Docs (Total)</th><th>This Month</th>
+                <th>Last Login</th><th>Logins</th><th>Joined</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="users-tbody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Licenses Page -->
+      <div id="page-licenses" style="display:none">
+        <div class="grid-2" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Generate License Codes</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Plan</label>
+                <select class="form-control" id="gen-plan">
+                  <option value="starter">Starter — R149/mo</option>
+                  <option value="pro" selected>Pro — R299/mo</option>
+                  <option value="business">Business — R599/mo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Duration (months)</label>
+                <select class="form-control" id="gen-months">
+                  <option value="1">1 month</option>
+                  <option value="3">3 months</option>
+                  <option value="6">6 months</option>
+                  <option value="12">12 months (1 year)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Number of codes to generate</label>
+                <input type="number" class="form-control" id="gen-count" value="1" min="1" max="50">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Notes (optional — e.g. customer name)</label>
+                <input type="text" class="form-control" id="gen-notes" placeholder="e.g. Thabo Mokoena payment March 2026">
+              </div>
+              <button class="btn btn-accent" onclick="generateCodes()" style="width:100%">Generate Codes</button>
+              <div id="gen-output" style="display:none">
+                <div class="codes-output" id="gen-codes-text"></div>
+                <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px" onclick="copyCodes()">📋 Copy Codes</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">How License Activation Works</div></div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--muted);line-height:1.75">
+                1. <strong>Customer's trial expires</strong> — they see an "Account Paused" screen asking them to contact you.<br><br>
+                2. <strong>Customer contacts you</strong> via WhatsApp (061 144 0669) or email.<br><br>
+                3. <strong>They pay you</strong> via EFT.<br><br>
+                4. <strong>Generate a license code</strong> here for their plan + duration.<br><br>
+                5. <strong>Send the code</strong> to the customer (WhatsApp, SMS, email).<br><br>
+                6. <strong>Customer enters the code</strong> in their app under Settings → Enter License Code.<br><br>
+                7. <strong>Account activates immediately</strong> — no downtime, no manual intervention.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent License Codes</div><button class="btn btn-sm btn-outline" onclick="loadLicenses()">↺ Refresh</button></div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Code</th><th>Plan</th><th>Months</th><th>Status</th><th>Used By</th><th>Created</th><th>Notes</th></tr></thead>
+              <tbody id="licenses-tbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support Page -->
+      <div id="page-support" style="display:none">
+        <div class="grid-2">
+          <div class="card"><div class="card-header"><div class="card-title">Support Contact Information</div></div>
+            <div class="card-body">
+              <div class="info-row"><span class="lbl">Company</span><span class="val">StanleyBytes</span></div>
+              <div class="info-row"><span class="lbl">Email</span><span class="val"><a href="mailto:info@stanleybytes.co.za" style="color:var(--accent)">info@stanleybytes.co.za</a></span></div>
+              <div class="info-row"><span class="lbl">Phone / WhatsApp</span><span class="val"><a href="tel:0611440669" style="color:var(--green);font-weight:700">061 144 0669</a></span></div>
+              <div class="info-row"><span class="lbl">Availability</span><span class="val">24/7</span></div>
+              <div class="info-row"><span class="lbl">Services</span><span class="val">Billing, Accounts, Technical Support, Queries</span></div>
+            </div>
+          </div>
+          <div class="card"><div class="card-header"><div class="card-title">Quick Actions</div></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+              <button class="btn btn-outline" onclick="window.open('mailto:info@stanleybytes.co.za')">📧 Open Email</button>
+              <button class="btn btn-outline" onclick="window.open('https://wa.me/27611440669')">💬 Open WhatsApp</button>
+              <button class="btn btn-accent" onclick="showPage('licenses')">🔑 Generate License Code</button>
+              <button class="btn btn-outline" onclick="showPage('users')">👥 View All Users</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main -->
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:640px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div class="modal-title" id="um-title">User Details</div>
+        <div class="modal-sub" id="um-sub"></div>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="closeModal('user-modal')">✕</button>
+    </div>
+    <div id="user-detail-content"><div class="empty-state">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+let ADMIN_KEY = '';
+let userDebounce;
+
+function doLogin(){
+  const k = document.getElementById('admin-key-input').value;
+  if(!k){return}
+  ADMIN_KEY = k;
+  fetchJson('/api/admin/stats').then(d=>{
+    if(d.error){
+      document.getElementById('login-err').style.display='block';
+      ADMIN_KEY='';
+    } else {
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app-layout').style.display='grid';
+      loadDashboard();
+      updateClock();
+      setInterval(updateClock,1000);
+    }
+  });
+}
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById('admin-time').textContent=now.toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function fetchJson(url, opts={}){
+  const headers = {'X-Admin-Key':ADMIN_KEY,'Content-Type':'application/json',...(opts.headers||{})};
+  const res = await fetch(url,{...opts,headers});
+  return res.json();
+}
+
+function showPage(name){
+  ['dashboard','users','licenses','support'].forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===name?'block':'none';
+    document.getElementById('nav-'+p).classList.toggle('active',p===name);
+  });
+  const titles={dashboard:'Dashboard',users:'User Management',licenses:'License Codes',support:'Support Info'};
+  document.getElementById('page-title').textContent=titles[name];
+  if(name==='users') loadUsers();
+  if(name==='licenses') loadLicenses();
+}
+
+function refreshData(){
+  const active=['dashboard','users','licenses','support'].find(p=>document.getElementById('page-'+p).style.display!=='none');
+  if(active==='dashboard') loadDashboard();
+  else if(active==='users') loadUsers();
+  else if(active==='licenses') loadLicenses();
+}
+
+async function loadDashboard(){
+  const s = await fetchJson('/api/admin/stats');
+  document.getElementById('s-total').textContent=s.total_users;
+  document.getElementById('s-active').textContent=s.active_paid;
+  document.getElementById('s-trial').textContent=s.trial_users;
+  document.getElementById('s-today').textContent=s.active_today;
+  document.getElementById('s-docs').textContent=s.total_docs.toLocaleString();
+  document.getElementById('s-new').textContent=s.new_this_month;
+  document.getElementById('s-rev').textContent='R '+parseFloat(s.total_revenue||0).toLocaleString('en-ZA',{minimumFractionDigits:0});
+
+  const users = await fetchJson('/api/admin/users?sort=created_at&order=desc');
+  // Recent signups
+  const recent = users.slice(0,6);
+  document.getElementById('recent-users-list').innerHTML = recent.length ? `<table><tbody>${recent.map(u=>`<tr>
+    <td><div class="user-name">${esc(u.business_name)}</div><div class="user-email">${esc(u.email)}</div></td>
+    <td>${planBadge(u.plan)}</td>
+    <td>${statusBadge(u.account_status)}</td>
+    <td>${u.doc_count||0}</td>
+    <td>${u.created_at?u.created_at.substring(0,10):''}</td>
+  </tr>`).join('')}</tbody></table>` : '<div class="empty-state">No users yet</div>';
+
+  // Expiring soon
+  const now=new Date();
+  const exp = users.filter(u=>{
+    if(u.account_status!=='trial'&&u.account_status!=='active') return false;
+    const expDate = u.plan==='trial' ? u.trial_expires_at : u.license_expires_at;
+    if(!expDate) return false;
+    const diff=(new Date(expDate)-now)/(1000*60*60*24);
+    return diff>=0 && diff<=7;
+  }).slice(0,8);
+  document.getElementById('expiring-users-list').innerHTML = exp.length ? `<table><tbody>${exp.map(u=>{
+    const expDate = u.plan==='trial' ? u.trial_expires_at : u.license_expires_at;
+    const days = Math.ceil((new Date(expDate)-now)/(1000*60*60*24));
+    return `<tr><td><div class="user-name">${esc(u.business_name)}</div><div class="user-email">${esc(u.email)}</div></td><td>${planBadge(u.plan)}</td><td style="color:var(--orange);font-weight:700">${days}d left</td><td><button class="btn btn-sm btn-accent" onclick="openUser(${u.id})">Manage</button></td></tr>`;
+  }).join('')}</tbody></table>` : '<div class="empty-state">No users expiring soon 🎉</div>';
+}
+
+async function loadUsers(){
+  const search=document.getElementById('user-search').value;
+  const plan=document.getElementById('user-filter-plan').value;
+  const status=document.getElementById('user-filter-status').value;
+  const sort=document.getElementById('user-sort').value;
+  const params=new URLSearchParams({search,plan,status,sort});
+  const users = await fetchJson(`/api/admin/users?${params}`);
+  document.getElementById('user-count-badge').textContent=`${users.length} users`;
+  if(!users.length){
+    document.getElementById('users-tbody').innerHTML='<tr><td colspan="9" class="empty-state">No users found</td></tr>';
+    return;
+  }
+  document.getElementById('users-tbody').innerHTML=users.map(u=>`<tr>
+    <td><div class="user-name">${esc(u.business_name)}</div><div class="user-email">${esc(u.email)}</div>${u.phone?`<div class="user-email">${esc(u.phone)}</div>`:''}</td>
+    <td>${planBadge(u.plan)}</td>
+    <td>${statusBadge(u.account_status)}</td>
+    <td>${u.doc_count||0}</td>
+    <td>${u.docs_this_month||0}</td>
+    <td>${u.last_login_at?u.last_login_at.substring(0,10):'Never'}</td>
+    <td>${u.login_count||0}</td>
+    <td>${u.created_at?u.created_at.substring(0,10):''}</td>
+    <td><button class="btn btn-sm btn-outline" onclick="openUser(${u.id})">View</button></td>
+  </tr>`).join('');
+}
+
+function debounceLoadUsers(){
+  clearTimeout(userDebounce);
+  userDebounce=setTimeout(loadUsers,350);
+}
+
+async function loadLicenses(){
+  const lcs = await fetchJson('/api/admin/licenses');
+  if(!lcs.length){
+    document.getElementById('licenses-tbody').innerHTML='<tr><td colspan="7" class="empty-state">No license codes yet</td></tr>';
+    return;
+  }
+  document.getElementById('licenses-tbody').innerHTML=lcs.map(l=>`<tr>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)">${esc(l.code)}</td>
+    <td>${planBadge(l.plan)}</td>
+    <td>${l.months} mo</td>
+    <td>${l.used_at?'<span class="badge badge-green">USED</span>':'<span class="badge badge-gray">UNUSED</span>'}</td>
+    <td>${l.business_name?`<div style="font-size:12px;font-weight:600">${esc(l.business_name)}</div><div style="font-size:11px;color:var(--pale)">${esc(l.email||'')}</div>`:'—'}</td>
+    <td style="font-size:12px">${l.created_at?l.created_at.substring(0,10):''}</td>
+    <td style="font-size:12px;color:var(--muted)">${esc(l.notes||'')}</td>
+  </tr>`).join('');
+}
+
+async function generateCodes(){
+  const plan=document.getElementById('gen-plan').value;
+  const months=parseInt(document.getElementById('gen-months').value);
+  const count=parseInt(document.getElementById('gen-count').value)||1;
+  const notes=document.getElementById('gen-notes').value;
+  const res=await fetchJson('/api/admin/licenses',{method:'POST',body:JSON.stringify({plan,months,count,notes})});
+  if(res.codes){
+    const text=res.codes.join('\n');
+    document.getElementById('gen-codes-text').textContent=`Plan: ${res.plan.toUpperCase()} | Duration: ${res.months} month(s)\n\n${text}`;
+    document.getElementById('gen-output').style.display='block';
+    loadLicenses();
+  }
+}
+
+function copyCodes(){
+  const t=document.getElementById('gen-codes-text').textContent;
+  navigator.clipboard.writeText(t).then(()=>alert('Codes copied to clipboard!'));
+}
+
+async function openUser(id){
+  document.getElementById('user-modal').classList.add('open');
+  document.getElementById('user-detail-content').innerHTML='<div class="empty-state">Loading...</div>';
+  const u=await fetchJson(`/api/admin/users/${id}`);
+  document.getElementById('um-title').textContent=u.business_name;
+  document.getElementById('um-sub').textContent=`${u.email} · ${u.phone||'No phone'} · Joined ${u.created_at?u.created_at.substring(0,10):''}`;
+
+  const expDate=u.plan==='trial'?u.trial_expires_at:u.license_expires_at;
+  const daysLeft=u.days_remaining;
+
+  const docStats=u.doc_stats||[];
+  const statMap={};
+  docStats.forEach(d=>{statMap[d.doc_type]={count:d.count,rev:d.rev}});
+
+  document.getElementById('user-detail-content').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+      <div class="ud-stat"><div class="v">${u.login_count||0}</div><div class="l">Total Logins</div></div>
+      <div class="ud-stat"><div class="v">${(statMap.invoice?.count||0)+(statMap.receipt?.count||0)}</div><div class="l">Invoices/Receipts</div></div>
+      <div class="ud-stat"><div class="v">${statMap.quotation?.count||0}</div><div class="l">Quotations</div></div>
+      <div class="ud-stat"><div class="v" style="color:var(--green)">R ${parseFloat((statMap.invoice?.rev||0)+(statMap.receipt?.rev||0)).toLocaleString('en-ZA',{minimumFractionDigits:0})}</div><div class="l">Total Revenue</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px">Account Info</div>
+        <div class="info-row"><span class="lbl">Status</span><span class="val">${statusBadge(u.account_status)}</span></div>
+        <div class="info-row"><span class="lbl">Plan</span><span class="val">${planBadge(u.plan)}</span></div>
+        <div class="info-row"><span class="lbl">Expires</span><span class="val">${expDate?expDate.substring(0,10):'—'} ${daysLeft>0?`(${daysLeft}d left)`:''}</span></div>
+        <div class="info-row"><span class="lbl">Last Login</span><span class="val">${u.last_login_at?u.last_login_at.substring(0,10):'Never'}</span></div>
+        <div class="info-row"><span class="lbl">Active</span><span class="val">${u.is_active?'Yes':'No'}</span></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px">Recent Documents</div>
+        ${(u.recent_docs||[]).slice(0,5).map(d=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px"><span>${esc(d.doc_number)}</span><span style="color:var(--muted)">${d.total?'R '+parseFloat(d.total).toFixed(0):''}</span></div>`).join('')||'<div style="font-size:13px;color:var(--pale)">No documents</div>'}
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px">Admin Actions</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <button class="btn btn-sm btn-accent" onclick="extendUser(${id})">⏱ Extend / Change Plan</button>
+      <button class="btn btn-sm ${u.is_active?'btn-danger':'btn-success'}" onclick="toggleSuspend(${id},${u.is_active})">
+        ${u.is_active?'🚫 Suspend Account':'✅ Activate Account'}
+      </button>
+    </div>
+  `;
+}
+
+async function extendUser(id){
+  const plan=prompt('Plan (starter/pro/business):','pro');
+  if(!plan) return;
+  const months=prompt('Add how many months?','1');
+  if(!months) return;
+  const newExp=new Date();
+  newExp.setMonth(newExp.getMonth()+parseInt(months));
+  await fetchJson(`/api/admin/users/${id}`,{method:'PUT',body:JSON.stringify({plan,license_expires_at:newExp.toISOString()})});
+  alert(`Account updated! Expires: ${newExp.toISOString().substring(0,10)}`);
+  openUser(id);
+}
+
+async function toggleSuspend(id,isActive){
+  const action=isActive?'suspend':'activate';
+  if(!confirm(`${action.charAt(0).toUpperCase()+action.slice(1)} this user?`)) return;
+  await fetchJson(`/api/admin/users/${id}/suspend`,{method:'POST',body:JSON.stringify({action})});
+  openUser(id);
+  loadDashboard();
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function planBadge(plan){
+  const m={trial:'badge-gray',starter:'badge-blue',pro:'badge-green',business:'badge-orange'};
+  return `<span class="badge ${m[plan]||'badge-gray'}">${(plan||'trial').toUpperCase()}</span>`;
+}
+function statusBadge(status){
+  const m={active:'badge-green',trial:'badge-blue',expired:'badge-red',suspended:'badge-gray'};
+  return `<span class="badge ${m[status]||'badge-gray'}">${(status||'').toUpperCase()}</span>`;
+}
+function esc(s){return String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+
+document.getElementById('user-modal').addEventListener('click',function(e){if(e.target===this)closeModal('user-modal')});
+document.getElementById('admin-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+</script>
+</body>
+</html>
