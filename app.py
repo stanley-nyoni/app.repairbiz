@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_file, send_from_directory
-import sqlite3, hashlib, hmac, os, json, jwt, uuid, io, secrets, string, smtplib, ssl, random
+import sqlite3, hashlib, hmac, os, json, jwt, uuid, io, secrets, string, smtplib, ssl, random, threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
@@ -174,10 +174,12 @@ init_db()
 
 # ── Email ──────────────────────────────────────────────────────────────────────
 def send_email(to_addr, subject, html_body, text_body=None):
+    """Send email in a background thread — never blocks the HTTP response."""
     if not EMAIL_ENABLED:
         print(f"\n{'='*52}\n[EMAIL DEV MODE]\nTo: {to_addr}\nSubject: {subject}\n{text_body or html_body}\n{'='*52}\n")
         return True
-    try:
+
+    def _send():
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From']    = f"RepairBiz <{SMTP_FROM}>"
@@ -185,12 +187,26 @@ def send_email(to_addr, subject, html_body, text_body=None):
         if text_body: msg.attach(MIMEText(text_body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
         ctx = ssl.create_default_context()
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-            s.ehlo(); s.starttls(context=ctx); s.login(SMTP_USER, SMTP_PASS)
-            s.sendmail(SMTP_FROM, to_addr, msg.as_string())
-        return True
-    except Exception as e:
-        print(f"[EMAIL ERROR] {e}"); return False
+        # Try STARTTLS on configured port first, then fall back to SSL on 465
+        try:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+                s.ehlo()
+                s.starttls(context=ctx)
+                s.login(SMTP_USER, SMTP_PASS)
+                s.sendmail(SMTP_FROM, to_addr, msg.as_string())
+            print(f"[EMAIL SENT] To: {to_addr}")
+        except Exception as e1:
+            print(f"[EMAIL] Port {SMTP_PORT} failed ({e1}) — trying SSL port 465")
+            try:
+                with smtplib.SMTP_SSL(SMTP_HOST, 465, context=ctx, timeout=15) as s:
+                    s.login(SMTP_USER, SMTP_PASS)
+                    s.sendmail(SMTP_FROM, to_addr, msg.as_string())
+                print(f"[EMAIL SENT via SSL 465] To: {to_addr}")
+            except Exception as e2:
+                print(f"[EMAIL ERROR] Both ports failed. 587: {e1} | 465: {e2}")
+
+    threading.Thread(target=_send, daemon=True).start()
+    return True
 
 def gen_otp(): return str(random.randint(100000, 999999))
 
@@ -295,10 +311,6 @@ def check_subscription(f):
 PREFIXES = {'invoice':'INV','receipt':'REC','quotation':'QUO','damage_report':'REP'}
 
 def next_doc_number(db, business_id, doc_type):
-    """
-    Atomically increments a per-business/type/year counter and returns
-    the formatted document number. Can never produce duplicates.
-    """
     biz    = db.execute('SELECT * FROM businesses WHERE id=?',(business_id,)).fetchone()
     prefix = {
         'invoice':       biz['invoice_prefix']  or 'INV',
@@ -307,19 +319,15 @@ def next_doc_number(db, business_id, doc_type):
         'damage_report': biz['report_prefix']    or 'REP',
     }.get(doc_type, 'DOC')
     year = datetime.now().strftime('%Y')
-
-    # INSERT OR IGNORE creates the row if missing (first doc of this type/year)
     db.execute(
         'INSERT OR IGNORE INTO doc_sequences (business_id,doc_type,year,last_n) VALUES (?,?,?,0)',
         (business_id, doc_type, year))
-    # Atomic increment — no race condition possible with SQLite's write lock
     db.execute(
         'UPDATE doc_sequences SET last_n=last_n+1 WHERE business_id=? AND doc_type=? AND year=?',
         (business_id, doc_type, year))
     n = db.execute(
         'SELECT last_n FROM doc_sequences WHERE business_id=? AND doc_type=? AND year=?',
         (business_id, doc_type, year)).fetchone()['last_n']
-
     fmt = biz['doc_number_format'] or '{PREFIX}-{N:05d}'
     try:
         return (fmt
@@ -990,18 +998,17 @@ def delete_catalogue_item(item_id):
 @app.route('/api/onboarding')
 @token_required
 def onboarding_status():
-    """Returns which setup steps are complete for this business."""
     with get_db() as db:
         biz      = db.execute('SELECT * FROM businesses WHERE id=?',(request.business_id,)).fetchone()
         doc_count= db.execute('SELECT COUNT(*) as c FROM documents WHERE business_id=?',(request.business_id,)).fetchone()['c']
         cat_count= db.execute('SELECT COUNT(*) as c FROM catalogue WHERE business_id=?',(request.business_id,)).fetchone()['c']
     return jsonify({
-        'has_logo':       bool(biz['logo_path']),
-        'has_banking':    bool(biz['bank_account_number']),
-        'has_document':   doc_count > 0,
-        'has_catalogue':  cat_count > 0,
-        'has_terms':      bool(biz['terms'] and len(biz['terms'].strip()) > 10),
-        'login_count':    biz['login_count'] or 1,
+        'has_logo':      bool(biz['logo_path']),
+        'has_banking':   bool(biz['bank_account_number']),
+        'has_document':  doc_count > 0,
+        'has_catalogue': cat_count > 0,
+        'has_terms':     bool(biz['terms'] and len(biz['terms'].strip()) > 10),
+        'login_count':   biz['login_count'] or 1,
     })
 
 # ── PDF ────────────────────────────────────────────────────────────────────────
