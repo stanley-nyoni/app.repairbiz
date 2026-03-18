@@ -8,8 +8,9 @@ from pdf_generator import generate_pdf
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'repairbiz-secret-2026-change-in-prod')
-app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', 'static/uploads')
-DB_PATH = os.environ.get('DB_PATH', 'repairbiz.db')
+DB_PATH = '/data/repairbiz.db' if os.path.isdir('/data') else 'repairbiz.db'
+UPLOAD_FOLDER = '/data/uploads' if os.path.isdir('/data') else 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ADMIN_KEY = os.environ.get('ADMIN_KEY', 'admin-repairbiz-2026')
 
 # Email config
