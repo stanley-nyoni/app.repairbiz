@@ -1176,6 +1176,7 @@ def admin_delete_user(user_id):
         db.commit()
     return jsonify({'message':'User deleted'})
 
+
 @app.route('/api/admin/licenses', methods=['POST'])
 @admin_required
 def create_license():
@@ -1210,14 +1211,6 @@ def suspend_user(user_id):
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
-
-@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
-@admin_required
-def admin_delete_user(user_id):
-    with get_db() as db:
-        db.execute('DELETE FROM businesses WHERE id=?',(user_id,))
-        db.commit()
-    return jsonify({'message':'User deleted'})
 
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
