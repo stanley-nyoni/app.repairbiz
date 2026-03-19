@@ -1151,6 +1151,31 @@ def admin_list_users():
         result.append(d)
     return jsonify(result)
 
+@app.route('/api/admin/users/<int:user_id>', methods=['GET'])
+@admin_required
+def admin_get_user(user_id):
+    with get_db() as db:
+        u = db.execute('SELECT * FROM businesses WHERE id=?',(user_id,)).fetchone()
+        if not u: return jsonify({'error':'Not found'}), 404
+        doc_stats = db.execute(
+            "SELECT doc_type, COUNT(*) as count, COALESCE(SUM(total),0) as rev FROM documents WHERE business_id=? GROUP BY doc_type",
+            (user_id,)).fetchall()
+        recent_docs = db.execute(
+            "SELECT * FROM documents WHERE business_id=? ORDER BY created_at DESC LIMIT 10",
+            (user_id,)).fetchall()
+    ud = _biz_dict(u)
+    ud['doc_stats']   = [dict(d) for d in doc_stats]
+    ud['recent_docs'] = [dict(d) for d in recent_docs]
+    return jsonify(ud)
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_user(user_id):
+    with get_db() as db:
+        db.execute('DELETE FROM businesses WHERE id=?',(user_id,))
+        db.commit()
+    return jsonify({'message':'User deleted'})
+
 @app.route('/api/admin/licenses', methods=['POST'])
 @admin_required
 def create_license():
