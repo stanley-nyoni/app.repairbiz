@@ -117,7 +117,7 @@ input,select{font-family:'Sora',sans-serif;font-size:13px}
       <div class="nav-item" onclick="showPage('licenses')" id="nav-licenses"><span class="nav-icon">🔑</span>License Codes</div>
       <div class="nav-item" onclick="showPage('support')" id="nav-support"><span class="nav-icon">💬</span>Support Info</div>
     </nav>
-    <div class="sidebar-footer">StanleyBytes Admin<br>RepairBiz v2.0</div>
+   <div class="sidebar-footer">StanleyBytes Admin<br>RepairBiz v2.0<br><span onclick="adminLogout()" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:11px;text-decoration:underline">Sign Out</span></div>
   </div>
   <div class="main">
     <div class="top-bar">
@@ -317,6 +317,7 @@ function doLogin(){
       document.getElementById('login-err').style.display='block';
       ADMIN_KEY='';
     } else {
+      sessionStorage.setItem('rb_admin_key', k);
       document.getElementById('login-screen').style.display='none';
       document.getElementById('app-layout').style.display='grid';
       loadDashboard();
@@ -410,7 +411,7 @@ async function loadUsers(){
     <td>${statusBadge(u.account_status)}</td>
     <td>${u.doc_count||0}</td>
     <td>${u.docs_this_month||0}</td>
-    <td>${u.last_login_at?u.last_login_at.substring(0,10):'Never'}</td>
+    <td>${u.last_login_at?new Date(u.last_login_at).toLocaleString('en-ZA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Never'}</td>
     <td>${u.login_count||0}</td>
     <td>${u.created_at?u.created_at.substring(0,10):''}</td>
     <td><button class="btn btn-sm btn-outline" onclick="openUser(${u.id})">View</button></td>
@@ -485,13 +486,17 @@ async function openUser(id){
         <div class="info-row"><span class="lbl">Status</span><span class="val">${statusBadge(u.account_status)}</span></div>
         <div class="info-row"><span class="lbl">Plan</span><span class="val">${planBadge(u.plan)}</span></div>
         <div class="info-row"><span class="lbl">Expires</span><span class="val">${expDate?expDate.substring(0,10):'—'} ${daysLeft>0?`(${daysLeft}d left)`:''}</span></div>
-        <div class="info-row"><span class="lbl">Last Login</span><span class="val">${u.last_login_at?u.last_login_at.substring(0,10):'Never'}</span></div>
+        <div class="info-row"><span class="lbl">Last Login</span><span class="val">${u.last_login_at?new Date(u.last_login_at).toLocaleString('en-ZA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Never'}</span></div>
         <div class="info-row"><span class="lbl">Active</span><span class="val">${u.is_active?'Yes':'No'}</span></div>
       </div>
       <div>
         <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px">Recent Documents</div>
         ${(u.recent_docs||[]).slice(0,5).map(d=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px"><span>${esc(d.doc_number)}</span><span style="color:var(--muted)">${d.total?'R '+parseFloat(d.total).toFixed(0):''}</span></div>`).join('')||'<div style="font-size:13px;color:var(--pale)">No documents</div>'}
       </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;margin-top:4px">All Documents</div>
+    <div id="user-docs-wrap" style="margin-bottom:18px">
+      <div style="text-align:center;padding:10px;color:var(--pale);font-size:13px">Loading documents...</div>
     </div>
     <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px">Admin Actions</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">
@@ -504,6 +509,144 @@ async function openUser(id){
       </button>
     </div>
   `;
+
+  // Load all documents for this user
+  loadUserDocs(id);
+}
+
+async function loadUserDocs(userId) {
+  const wrap = document.getElementById('user-docs-wrap');
+  if (!wrap) return;
+  const docs = await fetchJson(`/api/admin/users/${userId}/documents`);
+  if (!docs || !docs.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:14px;color:var(--pale);font-size:13px">No documents created yet</div>';
+    return;
+  }
+  const typeColors = { invoice:'#e8620a', receipt:'#0d9f6f', quotation:'#1d4ed8', damage_report:'#92400e' };
+  const statusColors = { paid:'#0d9f6f', sent:'#1d4ed8', draft:'#64748b', cancelled:'#dc2626', approved:'#0d9f6f', rejected:'#dc2626' };
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Doc #</th><th>Type</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+         ${docs.map(d => `<tr style="cursor:pointer" onclick="openAdminDoc(${d.id})" title="Click to view">
+            <td style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent)">${esc(d.doc_number)}</td>
+            <td><span class="badge" style="background:${typeColors[d.doc_type]}22;color:${typeColors[d.doc_type]}">${d.doc_type.replace('_',' ')}</span></td>
+            <td style="font-size:13px">${esc(d.customer_name)}</td>
+            <td style="font-size:12px;color:var(--muted)">${d.issue_date||''}</td>
+            <td style="font-weight:700">R ${parseFloat(d.total||0).toLocaleString('en-ZA',{minimumFractionDigits:2})}</td>
+            <td><span class="badge" style="background:${statusColors[d.status]||'#64748b'}22;color:${statusColors[d.status]||'#64748b'}">${d.status}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:right">${docs.length} document${docs.length!==1?'s':''} total</div>
+  `;
+}
+
+async function openAdminDoc(docId) {
+  document.getElementById('admin-doc-modal').classList.add('open');
+  document.getElementById('admin-doc-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--pale)">Loading...</div>';
+  const doc = await fetchJson(`/api/admin/documents/${docId}`);
+  if (!doc || doc.error) {
+    document.getElementById('admin-doc-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--red)">Could not load document</div>';
+    return;
+  }
+  document.getElementById('admin-doc-title').textContent = `${doc.doc_number} — ${doc.business?.business_name||''}`;
+
+  const typeColors  = { invoice:'#e8620a', receipt:'#0d9f6f', quotation:'#1d4ed8', damage_report:'#92400e' };
+  const statusOpts  = ['draft','sent','paid','cancelled','approved','rejected']
+    .map(s => `<option value="${s}" ${doc.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('');
+  const fmt = n => parseFloat(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2});
+
+  document.getElementById('admin-doc-content').innerHTML = `
+    <!-- Header info -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;background:var(--bg);border-radius:var(--r);padding:14px">
+      <div>
+        <div style="font-size:10px;color:var(--pale);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Customer</div>
+        <div style="font-weight:700;font-size:15px">${esc(doc.customer_name)}</div>
+        ${doc.customer_phone ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(doc.customer_phone)}</div>` : ''}
+        ${doc.customer_email ? `<div style="font-size:12px;color:var(--muted)">${esc(doc.customer_email)}</div>` : ''}
+        ${doc.customer_address ? `<div style="font-size:12px;color:var(--muted)">${esc(doc.customer_address)}</div>` : ''}
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--pale);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Amount</div>
+        <div style="font-size:24px;font-weight:800;color:var(--accent)">R ${fmt(doc.total)}</div>
+        <span class="badge badge-${doc.status}" style="margin-top:4px;display:inline-block">${doc.status}</span>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">${doc.issue_date||''}${doc.due_date?' · Due '+doc.due_date:''}</div>
+      </div>
+    </div>
+
+    <!-- Business info -->
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid var(--border)">
+      <strong>Business:</strong> ${esc(doc.business?.business_name||'')} &nbsp;·&nbsp; ${esc(doc.business?.email||'')}
+    </div>
+
+    <!-- Items table -->
+    ${doc.items?.length ? `
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table>
+        <thead><tr>
+          <th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th>
+        </tr></thead>
+        <tbody>
+          ${doc.items.map((item,idx) => `<tr style="background:${idx%2===0?'#fff':'var(--bg)'}">
+            <td><strong style="font-size:13px">${esc(item.item_name)}</strong>${item.description?`<br><span style="font-size:11px;color:var(--muted)">${esc(item.description)}</span>`:''}
+            </td>
+            <td>${item.quantity}</td>
+            <td>R ${fmt(item.unit_price)}</td>
+            <td><strong>R ${fmt(item.total)}</strong></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;padding:10px 12px;background:#fff;border-top:1px solid var(--border)">
+        <div style="min-width:180px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:2px 0"><span>Subtotal</span><span>R ${fmt(doc.subtotal)}</span></div>
+          ${doc.tax_rate ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:2px 0"><span>VAT (${doc.tax_rate}%)</span><span>R ${fmt(doc.tax_amount)}</span></div>` : ''}
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--accent);border-top:2px solid var(--border);padding-top:6px;margin-top:4px"><span>Total</span><span>R ${fmt(doc.total)}</span></div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    ${doc.notes ? `<div style="margin-bottom:12px;padding:10px 12px;background:#fff;border-radius:8px;border:1px solid var(--border)"><strong style="font-size:11px;color:var(--muted);text-transform:uppercase">Notes</strong><p style="font-size:13px;margin-top:4px">${esc(doc.notes)}</p></div>` : ''}
+
+    <!-- Admin controls -->
+    <div style="background:#fff;border-radius:8px;border:1px solid var(--border);padding:14px;margin-top:4px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">⚡ Admin Controls</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Update Status</label>
+          <select id="admin-doc-status-sel" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'Sora',sans-serif;font-size:13px;outline:none">
+            ${statusOpts}
+          </select>
+        </div>
+        <button class="btn btn-accent btn-sm" style="margin-top:16px" onclick="adminUpdateDocStatus(${doc.id})">Update Status</button>
+        <a href="/api/admin/documents/${doc.id}/pdf?admin_key=${ADMIN_KEY}" target="_blank" class="btn btn-sm btn-outline" style="margin-top:16px">
+          📄 View PDF
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+async function adminUpdateDocStatus(docId) {
+  const status = document.getElementById('admin-doc-status-sel')?.value;
+  const res = await fetchJson(`/api/admin/documents/${docId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status })
+  });
+  if (res && !res.error) {
+    alert(`Status updated to: ${status}`);
+    closeModal('admin-doc-modal');
+    // Refresh the user doc list if open
+    const wrap = document.getElementById('user-docs-wrap');
+    if (wrap) {
+      const userId = wrap.dataset.userId;
+      if (userId) loadUserDocs(parseInt(userId));
+    }
+  }
 }
 
 async function extendUser(id){
@@ -537,6 +680,12 @@ async function deleteUser(id, name) {
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+function adminLogout(){
+  sessionStorage.removeItem('rb_admin_key');
+  ADMIN_KEY='';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-layout').style.display='none';
+}
 
 function planBadge(plan){
   const m={trial:'badge-gray',starter:'badge-blue',pro:'badge-green',business:'badge-orange'};
@@ -549,7 +698,36 @@ function statusBadge(status){
 function esc(s){return String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
 
 document.getElementById('user-modal').addEventListener('click',function(e){if(e.target===this)closeModal('user-modal')});
+
+const savedKey = sessionStorage.getItem('rb_admin_key');
+if(savedKey){
+  ADMIN_KEY = savedKey;
+  fetchJson('/api/admin/stats').then(d=>{
+    if(!d.error){
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app-layout').style.display='grid';
+      loadDashboard();
+      updateClock();
+      setInterval(updateClock,1000);
+    } else {
+      sessionStorage.removeItem('rb_admin_key');
+      ADMIN_KEY='';
+    }
+  });
+}
+
 document.getElementById('admin-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 </script>
+
+<!-- Admin Doc Modal -->
+<div class="modal-overlay" id="admin-doc-modal">
+  <div class="modal" style="max-width:680px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title" id="admin-doc-title">Document</div>
+      <button class="btn btn-sm btn-outline" onclick="closeModal('admin-doc-modal')">✕</button>
+    </div>
+    <div id="admin-doc-content"><div style="text-align:center;padding:30px;color:var(--pale)">Loading...</div></div>
+  </div>
+</div>
 </body>
 </html>

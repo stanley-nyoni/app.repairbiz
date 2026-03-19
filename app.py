@@ -22,9 +22,9 @@ SMTP_FROM    = os.environ.get('SMTP_FROM', SMTP_USER)
 EMAIL_ENABLED = bool(SMTP_USER and SMTP_PASS)
 
 PLANS = {
-    'starter': {'name':'Starter','price':149,'docs_per_month':50,'customers':100},
-    'pro':     {'name':'Pro',    'price':299,'docs_per_month':300,'customers':500},
-    'business':{'name':'Business','price':599,'docs_per_month':9999,'customers':9999},
+    'starter': {'name':'Starter','price':99,'docs_per_month':50,'customers':100},
+    'pro':     {'name':'Pro',    'price':179,'docs_per_month':300,'customers':500},
+    'business':{'name':'Business','price':399,'docs_per_month':9999,'customers':9999},
 }
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -270,7 +270,7 @@ def verify_password(p, stored):
     except: return False
 
 def create_token(bid):
-    return jwt.encode({'business_id':bid,'exp':datetime.utcnow()+timedelta(days=7)},
+    return jwt.encode({'business_id':bid,'exp':datetime.utcnow()+timedelta(days=90)},
                       app.config['SECRET_KEY'], algorithm='HS256')
 
 def token_required(f):
@@ -353,7 +353,7 @@ def _biz_dict(b):
             'trial_expires_at','license_expires_at','login_count','created_at',
             'email_verified','accent_color','doc_number_format','footer_message',
             'invoice_prefix','receipt_prefix','quotation_prefix','report_prefix',
-            'pdf_show_signature']
+            'pdf_show_signature','last_login_at','is_active']
     d = {k: b[k] for k in keys if k in b.keys()}
     d['account_status'] = get_account_status(b)
     if d['account_status']=='trial' and b['trial_expires_at']:
@@ -1136,19 +1136,38 @@ def admin_stats():
 @app.route('/api/admin/users')
 @admin_required
 def admin_list_users():
-    search = request.args.get('search',''); plan=request.args.get('plan','')
-    filters=['1=1']; params=[]
+    search = request.args.get('search','')
+    plan   = request.args.get('plan','')
+    status = request.args.get('status','')
+    sort   = request.args.get('sort','created_at')
+    order  = 'DESC' if request.args.get('order','desc')=='desc' else 'ASC'
+    safe_sorts = ['created_at','business_name','email','last_login_at','login_count']
+    if sort not in safe_sorts: sort = 'created_at'
+    filters = ['1=1']; params = []
     if search:
         filters.append("(email LIKE ? OR business_name LIKE ? OR phone LIKE ?)")
-        params+=[f'%{search}%',f'%{search}%',f'%{search}%']
+        params += [f'%{search}%',f'%{search}%',f'%{search}%']
     if plan: filters.append("plan=?"); params.append(plan)
+    if status == 'trial': filters.append("plan='trial'")
+    elif status == 'expired':
+        filters.append("(plan='trial' AND trial_expires_at < datetime('now')) OR (plan!='trial' AND license_expires_at < datetime('now'))")
+    elif status == 'active': filters.append("plan!='trial' AND is_active=1")
+    elif status == 'suspended': filters.append("is_active=0")
+    where = ' AND '.join(filters)
     with get_db() as db:
-        rows = db.execute(f"SELECT * FROM businesses WHERE {' AND '.join(filters)} ORDER BY created_at DESC LIMIT 200",params).fetchall()
+        users = db.execute(
+            f"""SELECT b.*,
+                (SELECT COALESCE(COUNT(*),0) FROM documents d WHERE d.business_id=b.id) as doc_count,
+                (SELECT COALESCE(COUNT(*),0) FROM documents d WHERE d.business_id=b.id
+                 AND strftime('%Y-%m',d.created_at)=strftime('%Y-%m','now')) as docs_this_month
+            FROM businesses b WHERE {where} ORDER BY {sort} {order}""",
+            params).fetchall()
     result = []
-    for b in rows:
-        d = _biz_dict(b)
-        d['doc_count'] = 0
-        result.append(d)
+    for u in users:
+        ud = _biz_dict(u)
+        ud['doc_count']      = u['doc_count'] or 0
+        ud['docs_this_month'] = u['docs_this_month'] or 0
+        result.append(ud)
     return jsonify(result)
 
 @app.route('/api/admin/users/<int:user_id>', methods=['GET'])
@@ -1167,6 +1186,56 @@ def admin_get_user(user_id):
     ud['doc_stats']   = [dict(d) for d in doc_stats]
     ud['recent_docs'] = [dict(d) for d in recent_docs]
     return jsonify(ud)
+
+
+
+@app.route('/api/admin/users/<int:user_id>/documents', methods=['GET'])
+@admin_required
+def admin_get_user_documents(user_id):
+    with get_db() as db:
+        docs = db.execute(
+            'SELECT * FROM documents WHERE business_id=? ORDER BY created_at DESC',
+            (user_id,)).fetchall()
+    return jsonify([dict(d) for d in docs])
+
+@app.route('/api/admin/documents/<int:doc_id>', methods=['GET'])
+@admin_required
+def admin_get_document(doc_id):
+    with get_db() as db:
+        doc = db.execute('SELECT * FROM documents WHERE id=?',(doc_id,)).fetchone()
+        if not doc: return jsonify({'error':'Not found'}), 404
+        items = db.execute('SELECT * FROM document_items WHERE document_id=?',(doc_id,)).fetchall()
+        biz   = db.execute('SELECT * FROM businesses WHERE id=?',(doc['business_id'],)).fetchone()
+    d = dict(doc)
+    d['items'] = [dict(i) for i in items]
+    d['business'] = {'business_name':biz['business_name'],'email':biz['email']}
+    return jsonify(d)
+
+@app.route('/api/admin/documents/<int:doc_id>', methods=['PUT'])
+@admin_required
+def admin_update_document(doc_id):
+    d = request.json
+    fields = ['status','notes','customer_name','customer_phone','due_date']
+    updates = {k:d[k] for k in fields if k in d}
+    if not updates: return jsonify({'error':'Nothing to update'}), 400
+    with get_db() as db:
+        db.execute(f"UPDATE documents SET {', '.join(f'{k}=?' for k in updates)} WHERE id=?",
+                   list(updates.values())+[doc_id])
+        db.commit()
+        doc = db.execute('SELECT * FROM documents WHERE id=?',(doc_id,)).fetchone()
+    return jsonify(dict(doc))
+
+@app.route('/api/admin/documents/<int:doc_id>/pdf')
+@admin_required
+def admin_view_pdf(doc_id):
+    with get_db() as db:
+        doc   = db.execute('SELECT * FROM documents WHERE id=?',(doc_id,)).fetchone()
+        if not doc: return jsonify({'error':'Not found'}), 404
+        biz   = db.execute('SELECT * FROM businesses WHERE id=?',(doc['business_id'],)).fetchone()
+        items = db.execute('SELECT * FROM document_items WHERE document_id=?',(doc_id,)).fetchall()
+    pdf_bytes = generate_pdf(dict(doc), dict(biz), [dict(i) for i in items])
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf',
+                     as_attachment=False, download_name=f"{doc['doc_number']}.pdf")
 
 @app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
 @admin_required

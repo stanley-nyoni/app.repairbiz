@@ -7,6 +7,7 @@
 <meta name="description" content="Create professional invoices, quotes & receipts on the go. Built for appliance repair technicians. Start free for 30 days.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#0d1117;--ink2:#1e2d3d;--muted:#4a5e6e;--pale:#8a9bb0;--bg:#f5f7fa;--surface:#fff;--border:#e4e9f0;--accent:#0f5fff;--accent-dark:#0044d6;--accent-bg:#edf3ff;--green:#0d9f6f;--orange:#e8620a;--r:10px;--rx:18px}
@@ -38,7 +39,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(255,255,255,
 .hero h1 em{font-style:normal;color:var(--accent)}
 .hero .sub{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:540px;margin:0 auto 44px;line-height:1.65;font-weight:400}
 .hero-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
-.hero-note{margin-top:16px;font-size:13px;color:var(--pale)}
+.hero-note{margin-top:16px;font-size:11px;color:var(--pale)}
 .mockup-wrap{margin-top:72px;max-width:1040px;margin-left:auto;margin-right:auto;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.14);border:1px solid var(--border);overflow:hidden}
 .mock-bar{height:36px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:6px}
 .mock-dot{width:10px;height:10px;border-radius:50%}
@@ -56,7 +57,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(255,255,255,
 .sb-v{font-size:20px;font-weight:800;color:var(--ink)}
 .sb-l{font-size:10px;color:var(--pale);margin-top:2px;font-weight:500}
 .doc-row{background:#fff;border-radius:9px;padding:11px 14px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
-.dr-n{font-size:11.5px;font-weight:700}
+.dr-n{font-size:11.5px;font-weight:700;text-align: start;}
 .dr-c{font-size:10.5px;color:var(--muted);margin-top:2px}
 .dr-a{font-size:12px;font-weight:700;color:var(--accent)}
 .dr-b{font-size:9px;font-weight:700;padding:2px 8px;border-radius:999px}
@@ -168,7 +169,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <a href="/app" class="btn btn-outline" style="padding:9px 16px">Sign In</a>
-      <a href="/app#register" class="btn btn-primary">Start Free Trial</a>
+      <a href="/app#register" class="btn btn-primary">Free Trial</a>
     </div>
   </div>
 </nav>
@@ -176,12 +177,12 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
 <section class="hero">
   <div class="hero-badge"><span class="badge-dot"></span>30-day free trial — no credit card needed</div>
   <h1>Professional Invoicing for <em>Appliance Repair</em> Businesses</h1>
-  <p class="sub">Create polished invoices, quotes & receipts in seconds — from your phone, on the road, at the customer's door.</p>
+  <p class="sub">Create polished invoices, quotes & receipts in seconds from your phone, on the road, at the customer's door.</p>
   <div class="hero-actions">
     <a href="/app#register" class="btn btn-primary btn-xl">Start Free for 30 Days</a>
     <a href="#how" class="btn btn-outline btn-lg">See How It Works</a>
   </div>
-  <p class="hero-note">✓ No credit card &nbsp;·&nbsp; ✓ Works on any phone &nbsp;·&nbsp; ✓ PDF in one tap</p>
+  <p class="hero-note">✓ No credit card &nbsp;·&nbsp; ✓ Works on any phone &nbsp; </p>
   <div class="mockup-wrap">
     <div class="mock-bar">
       <div class="mock-dot" style="background:#ff5f57"></div>
@@ -216,7 +217,10 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
 <div class="trust">
   <div><p>Trusted by appliance repair businesses across South Africa</p>
   <div class="trust-logos">
-    <span>⚡ Quick Appliance Fix</span><span>🔧 TechFix Pro</span><span>❄️ CoolAir Services</span><span>🏠 HomeRepair SA</span><span>⚙️ Fix-It Fast</span>
+    <span><i class="fa-solid fa-truck"></i> Sizwe Repairs</span>
+    <span><i class="fa-solid fa-wrench"></i> Thandi's Appliance Care</span>
+    <span><i class="fa-solid fa-cogs"></i> Mokoena Services</span>
+    <span><i class="fa-solid fa-tools"></i> Durban Appliance Fix</span>
   </div></div>
 </div>
 
@@ -226,12 +230,12 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
     <div class="st">Everything you need to run your repair business</div>
     <p class="ss">Built specifically for appliance repair technicians who are always on the move.</p>
     <div class="feat-grid">
-      <div class="feat-card"><div class="fi" style="background:#edf3ff">📄</div><h3>Professional PDFs</h3><p>Create clean, branded invoices, quotations, receipts and damage reports. Add your logo, banking details and terms automatically.</p></div>
-      <div class="feat-card"><div class="fi" style="background:#dcfce7">📱</div><h3>Mobile-First</h3><p>Built for phones. Create and share invoices at the customer's home without needing a laptop. Works on any Android or iPhone.</p></div>
-      <div class="feat-card"><div class="fi" style="background:#fef3c7">💬</div><h3>Share via WhatsApp</h3><p>Generate a PDF and share it instantly via WhatsApp or email directly from the app. Customers receive professional documents in seconds.</p></div>
-      <div class="feat-card"><div class="fi" style="background:#fee2e2">👥</div><h3>Saved Customers</h3><p>Save customer details once, autofill future documents. Never type the same address twice. Includes email, phone and tax number.</p></div>
-      <div class="feat-card"><div class="fi" style="background:#f3e8ff">📊</div><h3>Revenue Tracking</h3><p>Track your monthly revenue and document counts. See your business performance at a glance with clean charts.</p></div>
-      <div class="feat-card"><div class="fi" style="background:#ecfdf5">🔧</div><h3>Damage Reports</h3><p>Create detailed service reports with appliance details, problem descriptions, technician notes and repair estimates.</p></div>
+      <div class="feat-card"><div class="fi" style="background:#edf3ff"><i class="fa-regular fa-file"></i></div><h3>Professional PDFs</h3><p>Create clean, branded invoices, quotations, receipts and damage reports. Add your logo, banking details and terms automatically.</p></div>
+      <div class="feat-card"><div class="fi" style="background:#dcfce7"><i class="fa-solid fa-mobile-alt"></i></div><h3>Mobile-First</h3><p>Built for phones. Create and share invoices at the customer's home without needing a laptop. Works on any Android or iPhone.</p></div>
+      <div class="feat-card"><div class="fi" style="background:#fef3c7"><i class="fa-brands fa-whatsapp"></i></div><h3>Share via WhatsApp</h3><p>Generate a PDF and share it instantly via WhatsApp or email directly from the app. Customers receive professional documents in seconds.</p></div>
+      <div class="feat-card"><div class="fi" style="background:#fee2e2"><i class="fa-solid fa-users"></i></div><h3>Saved Customers</h3><p>Save customer details once, autofill future documents. Never type the same address twice. Includes email, phone and tax number.</p></div>
+      <div class="feat-card"><div class="fi" style="background:#f3e8ff"><i class="fa-solid fa-chart-line"></i></div><h3>Revenue Tracking</h3><p>Track your monthly revenue and document counts. See your business performance at a glance with clean charts.</p></div>
+      <div class="feat-card"><div class="fi" style="background:#ecfdf5"><i class="fa-solid fa-wrench"></i></div><h3>Damage Reports</h3><p>Create detailed service reports with appliance details, problem descriptions, technician notes and repair estimates.</p></div>
     </div>
   </div>
 </section>
@@ -257,7 +261,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
     <div class="pricing-grid">
       <div class="price-card">
         <div class="p-plan">Starter</div>
-        <div class="p-amount"><sup>R</sup>149</div>
+        <div class="p-amount"><sup>R</sup>99</div>
         <div class="p-period">per month</div>
         <div class="p-desc">For solo technicians getting started with digital invoicing.</div>
         <div class="p-div"></div>
@@ -274,7 +278,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
       <div class="price-card pop">
         <div class="pop-badge">MOST POPULAR</div>
         <div class="p-plan">Pro</div>
-        <div class="p-amount"><sup>R</sup>299</div>
+        <div class="p-amount"><sup>R</sup>179</div>
         <div class="p-period">per month</div>
         <div class="p-desc">For active repair businesses invoicing multiple customers daily.</div>
         <div class="p-div"></div>
@@ -290,7 +294,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
       </div>
       <div class="price-card">
         <div class="p-plan">Business</div>
-        <div class="p-amount"><sup>R</sup>599</div>
+        <div class="p-amount"><sup>R</sup>399</div>
         <div class="p-period">per month</div>
         <div class="p-desc">For established repair shops with high volume and multiple technicians.</div>
         <div class="p-div"></div>
@@ -330,15 +334,15 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
       <div class="sl">Support</div>
       <div class="st" style="font-size:34px;margin-bottom:10px">We're here to help</div>
       <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:22px">StanleyBytes provides 24/7 support for all RepairBiz customers. Whether setting up for the first time or need billing help, we respond fast.</p>
-      <div class="sc"><div class="si" style="background:#edf3ff">📧</div><div><div style="font-weight:700;font-size:14px;margin-bottom:3px">Email Support</div><a href="mailto:info@stanleybytes.co.za" style="color:var(--accent);font-size:13px">info@stanleybytes.co.za</a><p style="font-size:11px;color:var(--pale);margin-top:2px">Billing, accounts & general queries</p></div></div>
-      <div class="sc"><div class="si" style="background:#dcfce7">📱</div><div><div style="font-weight:700;font-size:14px;margin-bottom:3px">WhatsApp / Call</div><a href="tel:0611440669" style="color:var(--green);font-size:14px;font-weight:700">061 144 0669</a><p style="font-size:11px;color:var(--pale);margin-top:2px">24/7 support — StanleyBytes</p></div></div>
+      <div class="sc"><div class="si" style="background:#edf3ff"><i class="fa-solid fa-envelope"></i></div><div><div style="font-weight:700;font-size:14px;margin-bottom:3px">Email Support</div><a href="mailto:info@stanleybytes.co.za" style="color:var(--accent);font-size:13px">info@stanleybytes.co.za</a><p style="font-size:11px;color:var(--pale);margin-top:2px">Billing, accounts & general queries</p></div></div>
+      <div class="sc"><div class="si" style="background:#dcfce7"><i class="fa-solid fa-phone"></i></div><div><div style="font-weight:700;font-size:14px;margin-bottom:3px">WhatsApp / Call</div><a href="tel:0611440669" style="color:var(--green);font-size:14px;font-weight:700">061 144 0669</a><p style="font-size:11px;color:var(--pale);margin-top:2px">24/7 support — StanleyBytes</p></div></div>
     </div>
     <div style="background:#fff;border-radius:var(--rx);border:1px solid var(--border);padding:28px">
       <h3 style="font-size:19px;font-weight:800;margin-bottom:7px">Ready to get started?</h3>
       <p style="font-size:13px;color:var(--muted);margin-bottom:22px">Create your account in 2 minutes. No credit card, no commitment. 30 days free.</p>
       <a href="/app#register" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:10px">Start Free Trial</a>
       <a href="mailto:info@stanleybytes.co.za" class="btn btn-outline btn-lg" style="width:100%;justify-content:center">Contact Us First</a>
-      <p style="font-size:12px;color:var(--pale);text-align:center;margin-top:16px">🔒 Secure &nbsp;·&nbsp; 🇿🇦 South African &nbsp;·&nbsp; 📱 Mobile First</p>
+      <p style="font-size:12px;color:var(--pale);text-align:center;margin-top:16px"><i class="fa-solid fa-lock"></i> Secure &nbsp;·&nbsp; <i class="fa-solid fa-mobile"></i> Mobile First</p>
     </div>
   </div>
 </div>
