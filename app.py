@@ -174,36 +174,44 @@ init_db()
 
 # ── Email ──────────────────────────────────────────────────────────────────────
 def send_email(to_addr, subject, html_body, text_body=None):
-    """Send email in a background thread — never blocks the HTTP response."""
-    if not EMAIL_ENABLED:
+    """Send email via SendGrid HTTPS API — works on Railway."""
+    SENDGRID_KEY = os.environ.get('SENDGRID_API_KEY', '')
+
+    if not SENDGRID_KEY:
         print(f"\n{'='*52}\n[EMAIL DEV MODE]\nTo: {to_addr}\nSubject: {subject}\n{text_body or html_body}\n{'='*52}\n")
         return True
 
     def _send():
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From']    = f"RepairBiz <{SMTP_FROM}>"
-        msg['To']      = to_addr
-        if text_body: msg.attach(MIMEText(text_body, 'plain'))
-        msg.attach(MIMEText(html_body, 'html'))
-        ctx = ssl.create_default_context()
-        # Try STARTTLS on configured port first, then fall back to SSL on 465
+        import urllib.request
+        import json as _json
+        from_email = SMTP_FROM or SMTP_USER or 'noreply@repairbiz.co.za'
+        payload = {
+            "personalizations": [{"to": [{"email": to_addr}]}],
+            "from": {"email": from_email, "name": "RepairBiz"},
+            "subject": subject,
+            "content": [
+                {"type": "text/plain",
+                 "value": text_body or "Please view this email in an HTML client."},
+                {"type": "text/html", "value": html_body},
+            ]
+        }
         try:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
-                s.ehlo()
-                s.starttls(context=ctx)
-                s.login(SMTP_USER, SMTP_PASS)
-                s.sendmail(SMTP_FROM, to_addr, msg.as_string())
-            print(f"[EMAIL SENT] To: {to_addr}")
-        except Exception as e1:
-            print(f"[EMAIL] Port {SMTP_PORT} failed ({e1}) — trying SSL port 465")
-            try:
-                with smtplib.SMTP_SSL(SMTP_HOST, 465, context=ctx, timeout=15) as s:
-                    s.login(SMTP_USER, SMTP_PASS)
-                    s.sendmail(SMTP_FROM, to_addr, msg.as_string())
-                print(f"[EMAIL SENT via SSL 465] To: {to_addr}")
-            except Exception as e2:
-                print(f"[EMAIL ERROR] Both ports failed. 587: {e1} | 465: {e2}")
+            req = urllib.request.Request(
+                "https://api.sendgrid.com/v3/mail/send",
+                data=_json.dumps(payload).encode('utf-8'),
+                headers={
+                    "Authorization": f"Bearer {SENDGRID_KEY}",
+                    "Content-Type":  "application/json",
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                print(f"[EMAIL SENT] To: {to_addr} Status: {resp.status}")
+        except urllib.error.HTTPError as e:
+            body = e.read().decode('utf-8', errors='ignore')
+            print(f"[EMAIL ERROR] SendGrid HTTP {e.code}: {body}")
+        except Exception as e:
+            print(f"[EMAIL ERROR] SendGrid failed: {e}")
 
     threading.Thread(target=_send, daemon=True).start()
     return True
@@ -1176,6 +1184,15 @@ def suspend_user(user_id):
     with get_db() as db:
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_user(user_id):
+    with get_db() as db:
+        db.execute('DELETE FROM businesses WHERE id=?',(user_id,))
+        db.commit()
+    return jsonify({'message':'User deleted'})
 
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')

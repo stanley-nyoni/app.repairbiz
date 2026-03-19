@@ -499,6 +499,9 @@ async function openUser(id){
       <button class="btn btn-sm ${u.is_active?'btn-danger':'btn-success'}" onclick="toggleSuspend(${id},${u.is_active})">
         ${u.is_active?'🚫 Suspend Account':'✅ Activate Account'}
       </button>
+      <button class="btn btn-sm btn-danger" onclick="deleteUser(${id}, '${u.business_name.replace(/'/g,"\\'")}')">
+        🗑 Delete Account
+      </button>
     </div>
   `;
 }
@@ -521,6 +524,16 @@ async function toggleSuspend(id,isActive){
   await fetchJson(`/api/admin/users/${id}/suspend`,{method:'POST',body:JSON.stringify({action})});
   openUser(id);
   loadDashboard();
+}
+
+async function deleteUser(id, name) {
+    if (!confirm(`Permanently delete ${name} and all their data? This cannot be undone.`)) return;
+    const res = await fetchJson(`/api/admin/users/${id}`, { method: 'DELETE' });
+    if (res.message) {
+        alert('User deleted.');
+        closeModal('user-modal');
+        loadDashboard();
+    }
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
