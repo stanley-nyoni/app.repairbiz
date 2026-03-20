@@ -199,27 +199,34 @@ function setWelcomeMessage() {
   const bar = document.getElementById('trial-bar');
   const status = business.account_status;
   if (status === 'trial') {
-    const d = business.days_remaining !== undefined ? business.days_remaining : null;
-    bar.style.display = 'flex';
-    const urgent = d !== null && d <= 5;
-    const bg = urgent ? '#fff5f5' : '#fffbeb';
-    const bord = urgent ? '#fecaca' : '#fde68a';
-    const col  = urgent ? '#dc2626' : '#92400e';
-    bar.style.background = bg; bar.style.border = `1px solid ${bord}`;
-    const dText = d === null ? 'Trial active' : d === 0 ? 'Last day!' : `${d} day${d===1?'':'s'} left`;
-    document.getElementById('trial-bar-left').innerHTML =
-      `<div style="font-size:14px;font-weight:700;color:${col}">${urgent?'⚠️':'🕐'} Free Trial — <strong>${dText}</strong></div>
-       <div style="font-size:12px;color:#9ca3af;margin-top:2px">Have a code? Enter it to activate your plan →</div>`;
-    document.getElementById('trial-bar-right').innerHTML =
-      `<input id="inline-license-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
-         style="padding:8px 12px;border:1.5px solid ${bord};border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;letter-spacing:.06em;text-transform:uppercase;outline:none;width:180px;color:#1a2744;font-weight:600;background:#fff"
-         oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
-         onkeydown="if(event.key==='Enter')activateLicenseInline()">
-       <button onclick="activateLicenseInline()" style="padding:8px 14px;background:#1a2744;color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer">Activate</button>
-       <span id="inline-license-msg" style="font-size:12px;font-weight:600"></span>`;
-  } else {
-    bar.style.display = 'none';
-  }
+      const d = business.days_remaining !== undefined ? business.days_remaining : null;
+      bar.style.display = 'block';
+      const urgent = d !== null && d <= 5;
+      const col  = urgent ? '#dc2626' : '#92400e';
+      const icon = urgent ? '⚠️' : '🕐';
+      const dText = d === null ? 'Trial active' : d === 0 ? 'Last day!' : `${d} day${d===1?'':'s'} left`;
+      document.getElementById('trial-bar-left').innerHTML = `
+        <div style="background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#fff">${icon} Free Trial — <strong style="color:${urgent?'#fca5a5':'#fde68a'}">${dText}</strong></div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">Have a license code? Enter it below to activate your plan</div>
+          </div>
+        </div>`;
+      document.getElementById('trial-bar-right').innerHTML = `
+        <div style="padding:14px 18px;background:var(--sf2);display:flex;flex-direction:column;gap:8px">
+          <input id="inline-license-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
+            style="width:100%;padding:11px;border:1.5px solid var(--border);border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:14px;text-align:center;letter-spacing:.12em;text-transform:uppercase;outline:none;font-weight:600;box-sizing:border-box;background:#fff;color:var(--navy)"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
+            onkeydown="if(event.key==='Enter')activateLicenseInline()">
+          <button onclick="activateLicenseInline()"
+            style="width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
+            Activate License
+          </button>
+          <span id="inline-license-msg" style="font-size:12px;font-weight:600;text-align:center;min-height:14px;color:var(--muted)"></span>
+        </div>`;
+    } else {
+      bar.style.display = 'none';
+    }
 
   document.getElementById('welcome-actions').innerHTML =
     `<button class="btn btn-primary btn-sm" onclick="openCreateDoc('invoice')">+ Invoice</button>

@@ -153,6 +153,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
   .hero-note{font-size:12px}
   .nav-cta .btn-outline{display:none}
   .mockup-wrap{margin-top:44px;border-radius:14px}
+  .nav-signin{display:none}
 }
 </style>
 </head>
@@ -168,8 +169,8 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
       <a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="#contact">Support</a>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
-      <a href="/app" class="btn btn-outline" style="padding:9px 16px">Sign In</a>
-      <a href="/app#register" class="btn btn-primary">Free Trial</a>
+      <a href="/app" class="btn btn-outline nav-signin" style="padding:9px 16px">Sign In</a>
+      <a href="/app#register" class="btn btn-primary" onclick="history.pushState(null,'','/');return true;">Start Free Trial</a>
     </div>
   </div>
 </nav>
@@ -184,45 +185,15 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
   </div>
   <p class="hero-note">✓ No credit card &nbsp;·&nbsp; ✓ Works on any phone &nbsp; </p>
   <div class="mockup-wrap">
-    <div class="mock-bar">
-      <div class="mock-dot" style="background:#ff5f57"></div>
-      <div class="mock-dot" style="background:#ffbd2e"></div>
-      <div class="mock-dot" style="background:#28c840"></div>
-      <div style="margin-left:auto;font-size:10px;color:#aaa;font-family:monospace">repairbiz.app/dashboard</div>
-    </div>
-    <div class="mock-body">
-      <div class="mock-side">
-        <div class="msi-logo"><div class="msi-logo-box"></div><div class="msi-logo-name">RepairBiz</div></div>
-        <div class="msi a"><span class="msi-dot"></span>Dashboard</div>
-        <div class="msi"><span class="msi-dot"></span>Documents</div>
-        <div class="msi"><span class="msi-dot"></span>Customers</div>
-        <div class="msi"><span class="msi-dot"></span>Accounting</div>
-        <div class="msi"><span class="msi-dot"></span>Settings</div>
-      </div>
-      <div class="mock-main">
-        <div class="stat-row">
-          <div class="stat-box"><div class="sb-v">12</div><div class="sb-l">Invoices</div></div>
-          <div class="stat-box"><div class="sb-v">8</div><div class="sb-l">Receipts</div></div>
-          <div class="stat-box"><div class="sb-v">5</div><div class="sb-l">Quotations</div></div>
-          <div class="stat-box"><div class="sb-v" style="color:#0d9f6f">R 18,420</div><div class="sb-l">Revenue</div></div>
-        </div>
-        <div class="doc-row"><div><div class="dr-n">INV-00012</div><div class="dr-c">Sipho Ndlovu · Samsung Washing Machine</div></div><div style="text-align:right"><div class="dr-a">R 2,760</div><div class="dr-b" style="background:#dcfce7;color:#15803d">PAID</div></div></div>
-        <div class="doc-row"><div><div class="dr-n">INV-00011</div><div class="dr-c">Nomsa Dlamini · LG Fridge</div></div><div style="text-align:right"><div class="dr-a">R 1,890</div><div class="dr-b" style="background:#dbeafe;color:#1d4ed8">SENT</div></div></div>
-        <div class="doc-row"><div><div class="dr-n">QUO-00008</div><div class="dr-c">Thabo Mokoena · Bosch Dishwasher</div></div><div style="text-align:right"><div class="dr-a">R 3,450</div><div class="dr-b" style="background:#f1f5f9;color:#64748b">DRAFT</div></div></div>
-      </div>
-    </div>
+  <div class="mock-bar">
+    <div class="mock-dot" style="background:#ff5f57"></div>
+    <div class="mock-dot" style="background:#ffbd2e"></div>
+    <div class="mock-dot" style="background:#28c840"></div>
+    <div style="margin-left:auto;font-size:10px;color:#aaa;font-family:monospace">repairbiz.up.railway.app/app</div>
   </div>
-</section>
-
-<div class="trust">
-  <div><p>Trusted by appliance repair businesses across South Africa</p>
-  <div class="trust-logos">
-    <span><i class="fa-solid fa-truck"></i> Sizwe Repairs</span>
-    <span><i class="fa-solid fa-wrench"></i> Thandi's Appliance Care</span>
-    <span><i class="fa-solid fa-cogs"></i> Mokoena Services</span>
-    <span><i class="fa-solid fa-tools"></i> Durban Appliance Fix</span>
-  </div></div>
+  <img src="static/dashboard-screenshot.png" alt="RepairBiz Dashboard" style="width:100%;display:block">
 </div>
+</section>
 
 <section id="features" style="background:var(--bg)">
   <div class="section-inner">
@@ -272,7 +243,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
           <li><div class="pfc">✓</div>WhatsApp & email sharing</li>
           <li><div class="pfc pfx" style="color:#dc2626">✕</div><span style="color:var(--pale)">Accounting reports</span></li>
         </ul>
-        <a href="/app#register" class="btn btn-outline" style="width:100%;justify-content:center">Get Started</a>
+        <a href="/app#register" class="btn btn-outline" style="width:100%;justify-content:center" onclick="history.pushState(null,'','/');return true;" >Get Started</a>
         <p style="font-size:11px;color:var(--pale);text-align:center;margin-top:10px">30-day free trial included</p>
       </div>
       <div class="price-card pop">
@@ -289,7 +260,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
           <li><div class="pfc">✓</div>WhatsApp & email sharing</li>
           <li><div class="pfc">✓</div>Accounting & revenue reports</li>
         </ul>
-        <a href="/app#register" class="btn btn-primary" style="width:100%;justify-content:center">Get Started</a>
+        <a href="/app#register" class="btn btn-primary" style="width:100%;justify-content:center" onclick="history.pushState(null,'','/');return true;" >Get Started</a>
         <p style="font-size:11px;color:var(--pale);text-align:center;margin-top:10px">30-day free trial included</p>
       </div>
       <div class="price-card">
@@ -305,7 +276,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
           <li><div class="pfc">✓</div>WhatsApp & email sharing</li>
           <li><div class="pfc">✓</div>Full accounting reports</li>
         </ul>
-        <a href="/app#register" class="btn btn-outline" style="width:100%;justify-content:center">Get Started</a>
+        <a href="/app#register" class="btn btn-outline" style="width:100%;justify-content:center" onclick="history.pushState(null,'','/');return true;" >Get Started</a>
         <p style="font-size:11px;color:var(--pale);text-align:center;margin-top:10px">30-day free trial included</p>
       </div>
     </div>
@@ -340,8 +311,8 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
     <div style="background:#fff;border-radius:var(--rx);border:1px solid var(--border);padding:28px">
       <h3 style="font-size:19px;font-weight:800;margin-bottom:7px">Ready to get started?</h3>
       <p style="font-size:13px;color:var(--muted);margin-bottom:22px">Create your account in 2 minutes. No credit card, no commitment. 30 days free.</p>
-      <a href="/app#register" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:10px">Start Free Trial</a>
-      <a href="mailto:info@stanleybytes.co.za" class="btn btn-outline btn-lg" style="width:100%;justify-content:center">Contact Us First</a>
+      <a href="/app#register" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:10px" onclick="history.pushState(null,'','/');return true;">Start Free Trial</a>
+      <a href="mailto:info@stanleybytes.co.za" class="btn btn-outline btn-lg" style="width:100%;justify-content:center" onclick="history.pushState(null,'','/');return true;">Contact Us First</a>
       <p style="font-size:12px;color:var(--pale);text-align:center;margin-top:16px"><i class="fa-solid fa-lock"></i> Secure &nbsp;·&nbsp; <i class="fa-solid fa-mobile"></i> Mobile First</p>
     </div>
   </div>
@@ -366,7 +337,7 @@ footer{background:#fff;border-top:1px solid var(--border);padding:44px 24px}
   <div style="position:relative">
     <h2>Start invoicing professionally today</h2>
     <p class="csub">Join repair technicians across South Africa who've gone paperless.</p>
-    <a href="/app#register" class="btn btn-accent btn-xl">Start Your Free 30-Day Trial</a>
+    <a href="/app#register" class="btn btn-accent btn-xl" onclick="history.pushState(null,'','/');return true;">Start Your Free 30-Day Trial</a>
     <p style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.35);position:relative">No credit card · No commitment</p>
   </div>
 </div>
