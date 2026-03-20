@@ -196,14 +196,20 @@ def _draw_page(cv, doc, biz, items):
             logo_right = ML + lw + 5*mm
         except: pass
 
-    # Business name & contact
-    _bold(cv, logo_right, H - 13*mm, str(biz.get('business_name','') or ''), 15, WHITE)
+    # Business name & contact — vertically centred with logo
+    lh = 15*mm
+    logo_mid = H - HEADER_H + (HEADER_H / 2)  # vertical centre of header band
+    name_y   = logo_mid + 3*mm                 # name sits just above centre
+    sub_y    = logo_mid - 2.5*mm               # contact sits just below centre
+    addr_y   = logo_mid - 7.5*mm               # address sits below contact
+
+    _bold(cv, logo_right, name_y, str(biz.get('business_name','') or ''), 15, WHITE)
     biz_sub = [x for x in [biz.get('phone',''), biz.get('email','')] if x]
     if biz_sub:
-        _txt(cv, logo_right, H - 19.5*mm, '   ·   '.join(biz_sub), 'Helvetica', 7.5,
+        _txt(cv, logo_right, sub_y, '   ·   '.join(biz_sub), 'Helvetica', 7.5,
              colors.Color(1,1,1,0.60))
     if biz.get('address'):
-        _txt(cv, logo_right, H - 25*mm, str(biz['address'])[:80], 'Helvetica', 7,
+        _txt(cv, logo_right, addr_y, str(biz['address'])[:80], 'Helvetica', 7,
              colors.Color(1,1,1,0.45))
 
     # Doc type — big ghost text + solid
