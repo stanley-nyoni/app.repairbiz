@@ -1282,7 +1282,7 @@ def suspend_user(user_id):
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
 
-@app.route('/api/admin/fix-doc-constraint', methods=['POST'])
+@app.route('/api/admin/fix-doc-constraint', methods=['GET', 'POST'])
 @admin_required
 def fix_doc_constraint():
     with get_db() as db:
