@@ -68,7 +68,7 @@ The business is not liable for pre-existing damage.',
         );
         CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            business_id INTEGER NOT NULL, doc_number TEXT UNIQUE NOT NULL,
+            business_id INTEGER NOT NULL, doc_number TEXT NOT NULL,
             doc_type TEXT NOT NULL CHECK(doc_type IN ('invoice','receipt','quotation','damage_report')),
             customer_name TEXT NOT NULL, customer_phone TEXT, customer_email TEXT,
             customer_address TEXT, customer_tax_reg_no TEXT,
@@ -83,7 +83,8 @@ The business is not liable for pre-existing damage.',
             signature_data TEXT, amount_paid REAL DEFAULT 0,
             payment_status TEXT DEFAULT 'unpaid',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(business_id) REFERENCES businesses(id)
+            FOREIGN KEY(business_id) REFERENCES businesses(id),
+            UNIQUE(business_id, doc_number)
         );
         CREATE TABLE IF NOT EXISTS document_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT, document_id INTEGER NOT NULL,
@@ -1279,6 +1280,40 @@ def suspend_user(user_id):
     with get_db() as db:
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
+
+
+@app.route('/api/admin/fix-doc-constraint', methods=['POST'])
+@admin_required
+def fix_doc_constraint():
+    with get_db() as db:
+        db.executescript('''
+        CREATE TABLE IF NOT EXISTS documents_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            business_id INTEGER NOT NULL,
+            doc_number TEXT NOT NULL,
+            doc_type TEXT NOT NULL CHECK(doc_type IN ('invoice','receipt','quotation','damage_report')),
+            customer_name TEXT NOT NULL, customer_phone TEXT, customer_email TEXT,
+            customer_address TEXT, customer_tax_reg_no TEXT,
+            issue_date TEXT NOT NULL, due_date TEXT, status TEXT DEFAULT 'draft',
+            subtotal REAL DEFAULT 0, tax_rate REAL DEFAULT 0,
+            tax_amount REAL DEFAULT 0, total REAL DEFAULT 0,
+            notes TEXT, appliance_type TEXT, appliance_brand TEXT,
+            model_number TEXT, serial_number TEXT, problem_description TEXT,
+            technician_notes TEXT, estimated_cost REAL,
+            bank_name TEXT, bank_account_holder TEXT, bank_account_number TEXT,
+            bank_branch_code TEXT, bank_reference TEXT, terms TEXT,
+            signature_data TEXT, amount_paid REAL DEFAULT 0,
+            payment_status TEXT DEFAULT 'unpaid',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(business_id) REFERENCES businesses(id),
+            UNIQUE(business_id, doc_number)
+        );
+        INSERT INTO documents_new SELECT * FROM documents;
+        DROP TABLE documents;
+        ALTER TABLE documents_new RENAME TO documents;
+        ''')
+        db.commit()
+    return jsonify({'message': 'Done — doc_number is now unique per business only'})
 
 
 # ── Static routes ──────────────────────────────────────────────────────────────
