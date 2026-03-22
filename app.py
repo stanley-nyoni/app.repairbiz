@@ -1281,40 +1281,38 @@ def suspend_user(user_id):
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
-
-@app.route('/api/admin/fix-doc-constraint', methods=['GET', 'POST'])
+@app.route('/api/admin/fix-sequences', methods=['GET', 'POST'])
 @admin_required
-def fix_doc_constraint():
+def fix_sequences():
     with get_db() as db:
-        db.executescript('''
-        CREATE TABLE IF NOT EXISTS documents_new (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            business_id INTEGER NOT NULL,
-            doc_number TEXT NOT NULL,
-            doc_type TEXT NOT NULL CHECK(doc_type IN ('invoice','receipt','quotation','damage_report')),
-            customer_name TEXT NOT NULL, customer_phone TEXT, customer_email TEXT,
-            customer_address TEXT, customer_tax_reg_no TEXT,
-            issue_date TEXT NOT NULL, due_date TEXT, status TEXT DEFAULT 'draft',
-            subtotal REAL DEFAULT 0, tax_rate REAL DEFAULT 0,
-            tax_amount REAL DEFAULT 0, total REAL DEFAULT 0,
-            notes TEXT, appliance_type TEXT, appliance_brand TEXT,
-            model_number TEXT, serial_number TEXT, problem_description TEXT,
-            technician_notes TEXT, estimated_cost REAL,
-            bank_name TEXT, bank_account_holder TEXT, bank_account_number TEXT,
-            bank_branch_code TEXT, bank_reference TEXT, terms TEXT,
-            signature_data TEXT, amount_paid REAL DEFAULT 0,
-            payment_status TEXT DEFAULT 'unpaid',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(business_id) REFERENCES businesses(id),
-            UNIQUE(business_id, doc_number)
-        );
-        INSERT INTO documents_new SELECT * FROM documents;
-        DROP TABLE documents;
-        ALTER TABLE documents_new RENAME TO documents;
-        ''')
+        businesses = db.execute('SELECT id FROM businesses').fetchall()
+        fixed = 0
+        for biz in businesses:
+            bid = biz['id']
+            for doc_type in ['invoice', 'receipt', 'quotation', 'damage_report']:
+                for year in ['2025', '2026']:
+                    rows = db.execute(
+                        """SELECT doc_number FROM documents
+                           WHERE business_id=? AND doc_type=?
+                           AND strftime('%Y', issue_date)=?""",
+                        (bid, doc_type, year)).fetchall()
+                    if not rows: continue
+                    max_n = 0
+                    for row in rows:
+                        parts = row['doc_number'].split('-')
+                        for part in reversed(parts):
+                            try: max_n = max(max_n, int(part)); break
+                            except ValueError: continue
+                    if max_n > 0:
+                        db.execute("""INSERT INTO doc_sequences
+                                      (business_id, doc_type, year, last_n)
+                                      VALUES (?, ?, ?, ?)
+                                      ON CONFLICT(business_id, doc_type, year)
+                                      DO UPDATE SET last_n=MAX(last_n, ?)""",
+                                   (bid, doc_type, year, max_n, max_n))
+                        fixed += 1
         db.commit()
-    return jsonify({'message': 'Done — doc_number is now unique per business only'})
-
+    return jsonify({'message': f'Fixed {fixed} sequences'})
 
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
