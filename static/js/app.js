@@ -182,18 +182,7 @@ function setWelcomeMessage() {
   if (h < 12)      greeting = `Good morning, ${name}! ☀️`;
   else if (h < 17) greeting = `Good afternoon, ${name}! 👋`;
   else             greeting = `Good evening, ${name}! 🌙`;
-  const subs = [
-    'What would you like to create today?',
-    'Your documents are ready when you are.',
-    'Keep the invoices flowing!',
-    "Another day, another invoice. Let's go!",
-    'Your customers are waiting for that quote.',
-    'Ready to send a professional invoice?',
-    "Great to have you back. Let's get to work.",
-    "New day, new opportunities. What's first?",
-  ];
-  const sub = subs[(business.login_count||0) % subs.length];
-  document.getElementById('welcome-text').textContent = `${greeting} ${sub}`;
+  document.getElementById('welcome-text').textContent = `${greeting}`;
 
   // Trial countdown bar
   const bar = document.getElementById('trial-bar');
@@ -205,24 +194,12 @@ function setWelcomeMessage() {
       const col  = urgent ? '#dc2626' : '#92400e';
       const icon = urgent ? '⚠️' : '🕐';
       const dText = d === null ? 'Trial active' : d === 0 ? 'Last day!' : `${d} day${d===1?'':'s'} left`;
-      document.getElementById('trial-bar-left').innerHTML = `
+      document.getElementById('trial-bar-note').innerHTML = `
         <div style="background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <div>
-            <div style="font-size:14px;font-weight:700;color:#fff">${icon} Free Trial — <strong style="color:${urgent?'#fca5a5':'#fde68a'}">${dText}</strong></div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">Have a license code? Enter it below to activate your plan</div>
+            <div style="font-size:14px;font-weight:600;color:#fff">${icon} Free Trial — <strong style="color:${urgent?'#fca5a5':'#fde68a'}">${dText}</strong></div>
+            <div style="font-size:12px;color:#cbd5e1;margin-top:2px">Upgrade now to keep invoicing without interruption</div>
           </div>
-        </div>`;
-      document.getElementById('trial-bar-right').innerHTML = `
-        <div style="padding:14px 18px;background:var(--sf2);display:flex;flex-direction:column;gap:8px">
-          <input id="inline-license-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
-            style="width:100%;padding:11px;border:1.5px solid var(--border);border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:14px;text-align:center;letter-spacing:.12em;text-transform:uppercase;outline:none;font-weight:600;box-sizing:border-box;background:#fff;color:var(--navy)"
-            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
-            onkeydown="if(event.key==='Enter')activateLicenseInline()">
-          <button onclick="activateLicenseInline()"
-            style="width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
-            Activate License
-          </button>
-          <span id="inline-license-msg" style="font-size:12px;font-weight:600;text-align:center;min-height:14px;color:var(--muted)"></span>
         </div>`;
     } else {
       bar.style.display = 'none';
@@ -359,9 +336,6 @@ async function loadDashboard() {
     overduePanel.style.display = 'none';
   }
 
-  // ── Onboarding ─────────────────────────────────────────────────────────────
-  loadOnboarding();
-
   const labels    = data.monthly_chart.map(d => d.month);
   const revenues  = data.monthly_chart.map(d => d.revenue);
   const docsCount = data.monthly_chart.map(d => d.docs);
@@ -385,11 +359,29 @@ async function loadDashboard() {
     wrap.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h3>No documents yet</h3><p>Create your first document above</p></div>`;
     return;
   }
-  wrap.innerHTML = `
-    <div class="doc-cards">
-      ${recent.map(d => docCardHtml(d, true)).join('')}
+ wrap.innerHTML = `
+    <div style="display:flex;flex-direction:column">
+      ${recent.map((d, i) => `
+        <div onclick="viewDoc(${d.id})" style="display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:${i < recent.length-1 ? '1px solid var(--border)' : 'none'};cursor:pointer;transition:background .15s;border-radius:6px" 
+          onmouseover="this.style.background='var(--sf2)'" 
+          onmouseout="this.style.background='transparent'">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+            <div style="width:8px;height:8px;border-radius:50%;background:${{invoice:'#e85d26',receipt:'#22c55e',quotation:'#3b82f6',damage_report:'#f59e0b'}[d.doc_type]||'#e85d26'};flex-shrink:0"></div>
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:700;color:var(--navy)">${d.doc_number}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(d.customer_name)}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:8px">
+            <div style="text-align:right">
+              <div style="font-size:12px;font-weight:700;color:var(--navy)">R ${formatMoney(d.total)}</div>
+              <div style="font-size:10px;color:var(--muted)">${formatDate(d.issue_date)}</div>
+            </div>
+            <span class="badge badge-${d.status}" style="font-size:9px">${d.status}</span>
+          </div>
+        </div>`).join('')}
     </div>
-    ${data.recent_documents.length > limit ? `<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="navigate('documents')">View All →</button></div>` : ''}
+    ${data.recent_documents.length > limit ? `<div style="text-align:center;margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="navigate('documents')">View All →</button></div>` : ''}
   `;
 }
 
@@ -1558,102 +1550,6 @@ async function loadAccounting(){
   document.getElementById('acc-profit-totals').innerHTML=`<div class="stat-card"><div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div><div class="stat-value" style="color:${netTotal>=0?'var(--success)':'#b91c1c'}">R ${formatMoney(netTotal)}</div><div class="stat-label">Net Profit ${year}</div></div></div><div class="stat-card"><div class="stat-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="stat-value">R ${formatMoney(totalRevenue)}</div><div class="stat-label">Revenue</div></div></div><div class="stat-card"><div class="stat-icon" style="background:#fee2e2;color:#b91c1c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/></svg></div><div><div class="stat-value">R ${formatMoney(totalExp)}</div><div class="stat-label">Expenses</div></div></div><div class="stat-card"><div class="stat-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div><div class="stat-value">${totalRevenue>0?Math.round((netTotal/totalRevenue)*100):0}%</div><div class="stat-label">Profit Margin</div></div></div>`;
   if(_accProfitChart)_accProfitChart.destroy();
   _accProfitChart=new Chart(document.getElementById('acc-profit-chart').getContext('2d'),{type:'bar',data:{labels:months,datasets:[{label:'Revenue',data:profRev,backgroundColor:'rgba(34,197,94,0.7)',borderRadius:4},{label:'Expenses',data:profExp,backgroundColor:'rgba(239,68,68,0.6)',borderRadius:4},{label:'Profit',data:profNet,type:'line',borderColor:'#1a2744',backgroundColor:'rgba(26,39,68,0.08)',fill:true,tension:0.4,pointBackgroundColor:'#1a2744'}]},options:{plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R'+v}}},responsive:true}});
-}
-
-// ── Onboarding ────────────────────────────────────────────────────────────────
-const ONBOARDING_STEPS = [
-  {
-    key:    'has_logo',
-    icon:   '🖼️',
-    title:  'Upload your business logo',
-    hint:   'Appears on every PDF you send to customers',
-    action: () => navigate('settings'),
-  },
-  {
-    key:    'has_banking',
-    icon:   '🏦',
-    title:  'Add your banking details',
-    hint:   'Printed on invoices so customers know where to pay',
-    action: () => navigate('settings'),
-  },
-  {
-    key:    'has_catalogue',
-    icon:   '🔧',
-    title:  'Add your services & parts',
-    hint:   'Save common jobs so you can add them to invoices in one tap',
-    action: () => navigate('catalogue'),
-  },
-  {
-    key:    'has_terms',
-    icon:   '📋',
-    title:  'Set your terms & conditions',
-    hint:   'Printed on every document — warranty period, payment terms etc.',
-    action: () => navigate('settings'),
-  },
-  {
-    key:    'has_document',
-    icon:   '📄',
-    title:  'Create your first invoice',
-    hint:   'Try it out — create a test invoice and share the PDF',
-    action: () => openCreateDoc('invoice'),
-  },
-];
-
-function dismissOnboarding() {
-  localStorage.setItem('rb_onboarding_dismissed', '1');
-  const panel = document.getElementById('onboarding-panel');
-  if (panel) panel.style.display = 'none';
-}
-
-async function loadOnboarding() {
-  // Don't show if user has explicitly dismissed
-  if (localStorage.getItem('rb_onboarding_dismissed')) return;
-
-  const data = await api('GET', '/onboarding');
-  if (!data) return;
-
-  const steps   = ONBOARDING_STEPS.map(s => ({ ...s, done: !!data[s.key] }));
-  const doneCount = steps.filter(s => s.done).length;
-  const total     = steps.length;
-  const allDone   = doneCount === total;
-
-  // Auto-dismiss if everything is done and user has been around for a while
-  if (allDone && data.login_count > 3) {
-    dismissOnboarding();
-    return;
-  }
-
-  const panel = document.getElementById('onboarding-panel');
-  if (!panel) return;
-  panel.style.display = 'block';
-
-  // Progress bar
-  document.getElementById('onboarding-fraction').textContent = `${doneCount} / ${total} complete`;
-  document.getElementById('onboarding-bar').style.width = `${(doneCount / total) * 100}%`;
-
-  if (allDone) {
-    document.getElementById('onboarding-steps').style.display   = 'none';
-    document.getElementById('onboarding-complete').style.display = 'block';
-    return;
-  }
-
-  document.getElementById('onboarding-steps').style.display   = 'grid';
-  document.getElementById('onboarding-complete').style.display = 'none';
-
-  document.getElementById('onboarding-steps').innerHTML = steps.map((s, i) => `
-    <div class="onboarding-step ${s.done ? 'done' : ''}" onclick="${s.done ? '' : `onboardingGo(${i})`}">
-      <div class="ob-icon ${s.done ? 'done' : 'pending'}">${s.icon}</div>
-      <div class="ob-body">
-        <div class="ob-title ${s.done ? 'done' : ''}">${s.title}</div>
-        <div class="ob-hint">${s.hint}</div>
-      </div>
-      <div class="ob-check ${s.done ? 'done' : 'pending'}">${s.done ? '✓' : i + 1}</div>
-    </div>`).join('');
-}
-
-function onboardingGo(stepIndex) {
-  const step = ONBOARDING_STEPS[stepIndex];
-  if (step && step.action) step.action();
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
