@@ -883,7 +883,15 @@ async function shareAction(action) {
     const blobUrl = URL.createObjectURL(blob);
 
     if (action === 'open') {
-      window.open(blobUrl, '_blank');
+      const newTab = window.open(blobUrl, '_blank');
+      if (!newTab) {
+        // Popup blocked — force download instead
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${num}.pdf`;
+        a.click();
+        toast('PDF downloaded — popup was blocked by browser', 'success');
+      }
       closeModal('share-modal');
       return;
     }
@@ -891,6 +899,7 @@ async function shareAction(action) {
     // For native share (WhatsApp, email, etc.) use Web Share API if available
     if (action === 'native') {
       const pdfFile = new File([blob], `${num}.pdf`, { type: 'application/pdf' });
+      // Try native share with file
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         try {
           await navigator.share({
@@ -901,15 +910,23 @@ async function shareAction(action) {
           closeModal('share-modal');
           return;
         } catch(e) {
-          if (e.name !== 'AbortError') toast('Share cancelled', 'warning');
-          return;
+          if (e.name === 'AbortError') return; // user cancelled
+          // Fall through to open in new tab
         }
-      } else {
-        // Fallback: open PDF in new tab
-        window.open(blobUrl, '_blank');
-        closeModal('share-modal');
-        return;
       }
+      // Fallback for browsers that don't support file sharing
+      // Open PDF in new tab so user can share manually
+      const newTab = window.open(blobUrl, '_blank');
+      if (!newTab) {
+        // If popup blocked, create a download link instead
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${num}.pdf`;
+        a.click();
+      }
+      toast('PDF opened — share it from your browser', 'success');
+      closeModal('share-modal');
+      return;
     }
 
     if (action === 'whatsapp') {
@@ -1038,9 +1055,19 @@ async function downloadPDF(id, docNumber) {
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = `${docNumber}.pdf`; a.click();
-    URL.revokeObjectURL(url);
-  } catch(e) { toast('Download failed', 'error'); }
+    a.href     = url;
+    a.download = `${docNumber}.pdf`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+    toast('PDF downloaded ✓', 'success');
+  } catch(e) {
+    toast('Download failed — try Open PDF instead', 'error');
+  }
 }
 
 // ── Accounting ────────────────────────────────────────────────────────────────

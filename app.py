@@ -1283,24 +1283,6 @@ def suspend_user(user_id):
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
-@app.route('/api/admin/fix-logo-paths')
-@admin_required
-def fix_logo_paths():
-    with get_db() as db:
-        bizs = db.execute("SELECT id, logo_path FROM businesses WHERE logo_path IS NOT NULL").fetchall()
-        fixed = 0
-        for b in bizs:
-            old_path = b['logo_path']
-            if not old_path: continue
-            # If stored as web path, convert to filesystem path
-            if old_path.startswith('static/uploads/'):
-                fname = old_path.replace('static/uploads/', '')
-                new_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-                db.execute('UPDATE businesses SET logo_path=? WHERE id=?', (new_path, b['id']))
-                fixed += 1
-        db.commit()
-    return jsonify({'message': f'Fixed {fixed} logo paths'})
-
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
@@ -1319,6 +1301,12 @@ def admin_page():
 @app.route('/<path:path>')
 def serve_static(path):
     if path.startswith('api/'): return jsonify({'error':'Not found'}), 404
+    if path.startswith('static/uploads/'):
+        # Serve uploads from the data volume on Railway
+        fname = path.replace('static/uploads/', '')
+        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+        if os.path.exists(upload_path):
+            return send_from_directory(app.config['UPLOAD_FOLDER'], fname)
     if path.startswith('static/') and os.path.exists(path):
         return send_from_directory('.', path)
     return send_from_directory('templates','landing.html')
