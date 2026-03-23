@@ -1281,39 +1281,6 @@ def suspend_user(user_id):
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
-@app.route('/api/admin/fix-sequences', methods=['GET', 'POST'])
-@admin_required
-def fix_sequences():
-    with get_db() as db:
-        businesses = db.execute('SELECT id FROM businesses').fetchall()
-        fixed = 0
-        for biz in businesses:
-            bid = biz['id']
-            for doc_type in ['invoice', 'receipt', 'quotation', 'damage_report']:
-                for year in ['2025', '2026']:
-                    rows = db.execute(
-                        """SELECT doc_number FROM documents
-                           WHERE business_id=? AND doc_type=?
-                           AND strftime('%Y', issue_date)=?""",
-                        (bid, doc_type, year)).fetchall()
-                    if not rows: continue
-                    max_n = 0
-                    for row in rows:
-                        parts = row['doc_number'].split('-')
-                        for part in reversed(parts):
-                            try: max_n = max(max_n, int(part)); break
-                            except ValueError: continue
-                    if max_n > 0:
-                        db.execute("""INSERT INTO doc_sequences
-                                      (business_id, doc_type, year, last_n)
-                                      VALUES (?, ?, ?, ?)
-                                      ON CONFLICT(business_id, doc_type, year)
-                                      DO UPDATE SET last_n=MAX(last_n, ?)""",
-                                   (bid, doc_type, year, max_n, max_n))
-                        fixed += 1
-        db.commit()
-    return jsonify({'message': f'Fixed {fixed} sequences'})
-
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
