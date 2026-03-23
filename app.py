@@ -581,11 +581,13 @@ def upload_logo():
     ext = f.filename.rsplit('.',1)[-1].lower()
     if ext not in ('png','jpg','jpeg','gif','webp'): return jsonify({'error':'Invalid file type'}), 400
     fname = f"logo_{request.business_id}.{ext}"
-    f.save(os.path.join(app.config['UPLOAD_FOLDER'], fname))
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+    f.save(save_path)
+    web_path = f"static/uploads/{fname}"
     with get_db() as db:
-        db.execute('UPDATE businesses SET logo_path=? WHERE id=?',(f"static/uploads/{fname}",request.business_id))
+        db.execute('UPDATE businesses SET logo_path=? WHERE id=?',(save_path, request.business_id))
         db.commit()
-    return jsonify({'logo_path':f"static/uploads/{fname}"})
+    return jsonify({'logo_path': web_path})
 
 # ── Customers ──────────────────────────────────────────────────────────────────
 @app.route('/api/customers', methods=['GET'])
@@ -1280,6 +1282,24 @@ def suspend_user(user_id):
     with get_db() as db:
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
+
+@app.route('/api/admin/fix-logo-paths')
+@admin_required
+def fix_logo_paths():
+    with get_db() as db:
+        bizs = db.execute("SELECT id, logo_path FROM businesses WHERE logo_path IS NOT NULL").fetchall()
+        fixed = 0
+        for b in bizs:
+            old_path = b['logo_path']
+            if not old_path: continue
+            # If stored as web path, convert to filesystem path
+            if old_path.startswith('static/uploads/'):
+                fname = old_path.replace('static/uploads/', '')
+                new_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                db.execute('UPDATE businesses SET logo_path=? WHERE id=?', (new_path, b['id']))
+                fixed += 1
+        db.commit()
+    return jsonify({'message': f'Fixed {fixed} logo paths'})
 
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
