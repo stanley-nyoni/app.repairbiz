@@ -253,8 +253,25 @@ function updateSidebar() {
   document.getElementById('sidebar-biz-name').textContent = business.business_name;
   document.getElementById('sidebar-email').textContent    = business.email;
   const av = document.getElementById('sidebar-avatar');
-  if (business.logo_path) av.innerHTML = `<img src="/${business.logo_path}" alt="">`;
-  else av.textContent = business.business_name.charAt(0).toUpperCase();
+  if (business.logo_path) {
+    // Convert filesystem path to web path
+    const webPath = business.logo_path
+      .replace('/data/uploads/', '/static/uploads/')
+      .replace('static/uploads/', '/static/uploads/');
+    const img = document.createElement('img');
+    img.src = webPath;
+    img.alt = '';
+    img.onerror = () => {
+      // If image fails to load fall back to initial letter
+      av.innerHTML = '';
+      av.textContent = business.business_name.charAt(0).toUpperCase();
+    };
+    av.innerHTML = '';
+    av.appendChild(img);
+  } else {
+    av.innerHTML = '';
+    av.textContent = business.business_name.charAt(0).toUpperCase();
+  }
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
@@ -1114,7 +1131,14 @@ async function loadSettings() {
   set('s-bank-name', biz.bank_name); set('s-bank-holder', biz.bank_account_holder);
   set('s-bank-acc', biz.bank_account_number); set('s-bank-branch', biz.bank_branch_code);
   set('s-bank-ref', biz.bank_reference); set('s-terms', biz.terms);
-  if (biz.logo_path) { const p=document.getElementById('logo-preview'); if(p){p.src='/'+biz.logo_path;p.style.display='block';} }
+  if (biz.logo_path) {
+    const p = document.getElementById('logo-preview');
+    if (p) {
+      const webPath = '/static/uploads/' + biz.logo_path.split('/').pop();
+      p.src = webPath;
+      p.style.display = 'block';
+    }
+  }
   updateSidebar();
   updateSettingsPlanInfo();
 }
@@ -1139,9 +1163,16 @@ async function uploadLogo(input) {
   const file = input.files[0]; if (!file) return;
   const form = new FormData(); form.append('logo', file);
   const result = await api('POST', '/business/logo', form, true);
-  if (result) { business.logo_path=result.logo_path; localStorage.setItem('rb_business',JSON.stringify(business)); const p=document.getElementById('logo-preview'); if(p){p.src='/'+result.logo_path;p.style.display='block';} updateSidebar(); toast('Logo uploaded!','success'); }
+  if (result) {
+    business.logo_path = result.logo_path;
+    localStorage.setItem('rb_business', JSON.stringify(business));
+    const webPath = '/static/uploads/' + result.logo_path.split('/').pop();
+    const p = document.getElementById('logo-preview');
+    if (p) { p.src = webPath; p.style.display = 'block'; }
+    updateSidebar();
+    toast('Logo uploaded!', 'success');
+  }
 }
-
 async function changePassword() {
   const cur=document.getElementById('s-cur-pass').value, nw=document.getElementById('s-new-pass').value;
   if (!cur||!nw) { toast('Fill in both fields','warning'); return; }
