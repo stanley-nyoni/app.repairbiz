@@ -22,9 +22,9 @@ SMTP_FROM    = os.environ.get('SMTP_FROM', SMTP_USER)
 EMAIL_ENABLED = bool(SMTP_USER and SMTP_PASS)
 
 PLANS = {
-    'starter': {'name':'Starter','price':99,'docs_per_month':50,'customers':100},
-    'pro':     {'name':'Pro',    'price':179,'docs_per_month':300,'customers':500},
-    'business':{'name':'Business','price':399,'docs_per_month':9999,'customers':9999},
+    'starter': {'name':'Starter','price':59,'docs_per_month':50,'customers':100},
+    'pro':     {'name':'Pro',    'price':99,'docs_per_month':300,'customers':500},
+    'business':{'name':'Business','price':199,'docs_per_month':9999,'customers':9999},
 }
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -188,7 +188,7 @@ def send_email(to_addr, subject, html_body, text_body=None):
         from_email = SMTP_FROM or SMTP_USER or 'noreply@repairbiz.co.za'
         payload = {
             "personalizations": [{"to": [{"email": to_addr}]}],
-            "from": {"email": from_email, "name": "RepairBiz"},
+            "from": {"email": from_email, "name": "SB Invoices"},
             "subject": subject,
             "content": [
                 {"type": "text/plain",
@@ -222,12 +222,12 @@ def gen_otp(): return str(random.randint(100000, 999999))
 def send_otp_email(to, biz_name, otp):
     html = f"""<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
       <div style="background:#1a2233;border-radius:12px;padding:28px 24px;text-align:center;margin-bottom:24px">
-        <h1 style="color:#fff;font-size:22px;margin:0 0 4px">RepairBiz</h1>
+        <h1 style="color:#fff;font-size:22px;margin:0 0 4px">SB Invoices</h1>
         <p style="color:rgba(255,255,255,0.55);font-size:13px;margin:0">Professional Invoicing</p>
       </div>
       <h2 style="color:#1a2233;font-size:18px;margin:0 0 12px">Verify your email address</h2>
       <p style="color:#4a5568;font-size:14px;line-height:1.6;margin:0 0 24px">
-        Hi <strong>{biz_name}</strong>, welcome to RepairBiz!<br>
+        Hi <strong>{biz_name}</strong>, welcome to SB Invoices!<br>
         Enter this code to activate your 30-day free trial:
       </p>
       <div style="background:#f4f6f9;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;border:2px dashed #dde3ea">
@@ -237,13 +237,13 @@ def send_otp_email(to, biz_name, otp):
       <p style="color:#9aa5b4;font-size:12px">If you didn't register, ignore this email.<br>
       Help: <a href="mailto:info@stanleybytes.co.za" style="color:#1a2233">info@stanleybytes.co.za</a> · 061 144 0669</p>
     </div>"""
-    send_email(to, f"Your RepairBiz code: {otp}", html,
-               f"RepairBiz verification code: {otp}\n\nExpires in 15 minutes.")
+    send_email(to, f"Your SB Invoices code: {otp}", html,
+               f"SB Invoices verification code: {otp}\n\nExpires in 15 minutes.")
 
 def send_welcome_email(to, biz_name):
     html = f"""<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
       <div style="background:#1a2233;border-radius:12px;padding:28px 24px;text-align:center;margin-bottom:24px">
-        <h1 style="color:#fff;font-size:22px;margin:0">RepairBiz</h1>
+        <h1 style="color:#fff;font-size:22px;margin:0">SB Invoices</h1>
       </div>
       <h2 style="color:#1a2233;font-size:18px;margin:0 0 12px">Welcome, {biz_name}! 🎉</h2>
       <p style="color:#4a5568;font-size:14px;line-height:1.6;margin:0 0 16px">Your 30-day free trial has started. Get set up:</p>
@@ -256,7 +256,7 @@ def send_welcome_email(to, biz_name):
       <p style="color:#4a5568;font-size:14px">Questions? WhatsApp <strong>061 144 0669</strong></p>
       <p style="color:#9aa5b4;font-size:12px;margin-top:24px">StanleyBytes · info@stanleybytes.co.za</p>
     </div>"""
-    send_email(to, "Welcome to RepairBiz — your trial has started!", html)
+    send_email(to, "Welcome to SB Invoices — your trial has started!", html)
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
 def hash_password(p):
@@ -498,13 +498,13 @@ def forgot_password():
             db.commit()
         html = f"""<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
           <div style="background:#1a2233;border-radius:12px;padding:28px;text-align:center;margin-bottom:24px">
-            <h1 style="color:#fff;font-size:22px;margin:0">RepairBiz</h1></div>
+            <h1 style="color:#fff;font-size:22px;margin:0">SB Invoices</h1></div>
           <h2 style="color:#1a2233;font-size:18px;margin:0 0 12px">Reset your password</h2>
           <div style="background:#f4f6f9;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;border:2px dashed #dde3ea">
             <span style="font-size:42px;font-weight:800;letter-spacing:10px;color:#1a2233;font-family:monospace">{otp}</span>
             <p style="color:#9aa5b4;font-size:12px;margin:12px 0 0">Expires in 15 minutes</p></div>
           <p style="color:#9aa5b4;font-size:12px">If you didn't request this, ignore this email.</p></div>"""
-        send_email(email, f"RepairBiz password reset code: {otp}", html,
+        send_email(email, f"SB Invoices password reset code: {otp}", html,
                    f"Password reset code: {otp}\n\nExpires in 15 minutes.")
     return jsonify({'message':'If that email is registered, a reset code has been sent.'})
 

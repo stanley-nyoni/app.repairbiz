@@ -1,5 +1,5 @@
 """
-RepairBiz — Premium Invoice PDF
+SB Invoices — Premium Invoice PDF
 Design: Dark full-width header block with business name and doc type.
         Two-tone body — white content area, light-grey sidebar for meta.
         Items table with proper description wrapping, alternating rows.
@@ -578,4 +578,4 @@ def _footer(cv, doc_number, biz, AC, AC_LT):
     _txt(cv, ML,    STRIP_H + 8*mm,   f"Generated  {datetime.now().strftime('%d %b %Y')}", 'Helvetica', 7, PALE)
     _bold(cv, mid_x, STRIP_H + 8*mm,  footer_msg[:90], 7.5, MID, 'center')
     _txt(cv, RIGHT,  STRIP_H + 8*mm,  doc_number, 'Helvetica', 7, PALE, 'right')
-    _txt(cv, mid_x,  STRIP_H + 3.5*mm,'Powered by RepairBiz', 'Helvetica', 6, PALE, 'center')
+    _txt(cv, mid_x,  STRIP_H + 3.5*mm,'Powered by SB Invoices', 'Helvetica', 6, PALE, 'center')

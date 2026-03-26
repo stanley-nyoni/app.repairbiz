@@ -1,6 +1,6 @@
-# RepairBiz — Appliance Service Management System
+# SB Invoices — Professional Invoicing for Freelancers & Small Business
 
-A professional web-based invoicing and document management system for small appliance repair businesses.
+A professional web-based invoicing and document management system for freelancers and small businesses.
 
 ## Features
 

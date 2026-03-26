@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RepairBiz Admin</title>
+<title> SB Invoices Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -97,7 +97,7 @@ input,select{font-family:'Sora',sans-serif;font-size:13px}
   <div class="login-box">
     <div style="font-size:32px;margin-bottom:12px">🛡️</div>
     <h1>Admin Access</h1>
-    <p>RepairBiz Super Admin Panel</p>
+    <p>SB Invoices Super Admin Panel</p>
     <input type="password" id="admin-key-input" placeholder="Enter admin key" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn btn-primary" style="width:100%;padding:12px" onclick="doLogin()">Access Admin Panel</button>
     <p id="login-err" style="color:var(--red);font-size:13px;margin-top:10px;display:none">Invalid admin key</p>
@@ -108,7 +108,7 @@ input,select{font-family:'Sora',sans-serif;font-size:13px}
 <div class="layout" id="app-layout" style="display:none">
   <div class="sidebar">
     <div class="sidebar-logo">
-      <div class="sl-name">🛡️ RepairBiz</div>
+      <div class="sl-name">🛡️ SB Invoices</div>
       <div class="sl-sub">Super Admin Panel</div>
     </div>
     <nav>
@@ -117,7 +117,7 @@ input,select{font-family:'Sora',sans-serif;font-size:13px}
       <div class="nav-item" onclick="showPage('licenses')" id="nav-licenses"><span class="nav-icon">🔑</span>License Codes</div>
       <div class="nav-item" onclick="showPage('support')" id="nav-support"><span class="nav-icon">💬</span>Support Info</div>
     </nav>
-   <div class="sidebar-footer">StanleyBytes Admin<br>RepairBiz v2.0<br><span onclick="adminLogout()" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:11px;text-decoration:underline">Sign Out</span></div>
+   <div class="sidebar-footer">StanleyBytes Admin<br>SB Invoices v2.0<br><span onclick="adminLogout()" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:11px;text-decoration:underline">Sign Out</span></div>
   </div>
   <div class="main">
     <div class="top-bar">

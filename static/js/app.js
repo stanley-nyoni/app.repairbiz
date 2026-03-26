@@ -426,29 +426,48 @@ async function loadDocuments() {
   const cnt = document.getElementById('doc-count');
   if (cnt) cnt.textContent = `${docs.length} document${docs.length !== 1 ? 's' : ''}`;
 
-  // Desktop table
   const tbl = document.getElementById('documents-table');
   const cds = document.getElementById('documents-cards');
   const emptyHtml = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h3>No documents</h3><p>Try adjusting your filters</p></div>`;
-  if (!docs.length) { tbl.innerHTML = emptyHtml; cds.innerHTML = emptyHtml; return; }
 
-  tbl.innerHTML = `<table><thead><tr>
-    <th>Doc #</th><th>Type</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th><th>Actions</th>
-  </tr></thead><tbody>${docs.map(d => `<tr>
-    <td><strong style="font-size:13px">${d.doc_number}</strong></td>
-    <td><span class="badge badge-${d.doc_type}">${docTypeLabel(d.doc_type)}</span></td>
-    <td>${escHtml(d.customer_name)}</td>
-    <td style="color:var(--muted);font-size:12px">${formatDate(d.issue_date)}</td>
-    <td><strong>R ${formatMoney(d.total)}</strong></td>
-    <td><span class="badge badge-${d.status}">${d.status}</span></td>
-    <td><div style="display:flex;gap:4px">
-      <button class="btn btn-ghost btn-sm btn-icon" onclick="viewDoc(${d.id})" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      <button class="btn btn-ghost btn-sm btn-icon" onclick="editDoc(${d.id})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="deleteDoc(${d.id})" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
-    </div></td>
-  </tr>`).join('')}</tbody></table>`;
+  if (!docs.length) {
+    tbl.innerHTML = emptyHtml;
+    cds.innerHTML = '';
+    return;
+  }
 
-  cds.innerHTML = docs.map(d => docCardHtml(d, false)).join('');
+  const typeColors = { invoice:'#e85d26', receipt:'#22c55e', quotation:'#3b82f6', damage_report:'#f59e0b' };
+  const typeLabels = { invoice:'Invoice', receipt:'Receipt', quotation:'Quote', damage_report:'Report' };
+
+  const listHtml = `
+    <div style="display:flex;flex-direction:column">
+      ${docs.map((d, i) => `
+        <div onclick="viewDoc(${d.id})"
+          style="display:flex;align-items:center;justify-content:space-between;padding:12px 6px;border-bottom:${i < docs.length-1 ? '1px solid var(--border)' : 'none'};cursor:pointer;transition:background .15s;border-radius:6px"
+          onmouseover="this.style.background='var(--sf2)'"
+          onmouseout="this.style.background='transparent'">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
+            <div style="width:3px;height:36px;border-radius:2px;background:${typeColors[d.doc_type]||'#e85d26'};flex-shrink:0"></div>
+            <div style="min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:13px;font-weight:700;color:var(--navy)">${d.doc_number}</span>
+                <span style="font-size:10px;font-weight:600;color:${typeColors[d.doc_type]||'#e85d26'};text-transform:uppercase;letter-spacing:.04em">${typeLabels[d.doc_type]||d.doc_type}</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${escHtml(d.customer_name)}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;margin-left:8px">
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:700;color:var(--navy)">R ${formatMoney(d.total)}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">${formatDate(d.issue_date)}</div>
+            </div>
+            <span class="badge badge-${d.status}" style="font-size:9px;white-space:nowrap">${d.status}</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  tbl.innerHTML = listHtml;
+  cds.innerHTML = '';
 }
 
 function clearDocFilters() {
