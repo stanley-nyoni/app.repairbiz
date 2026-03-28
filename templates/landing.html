@@ -824,7 +824,6 @@ footer {
   </div>
 </nav>
 
-<!-- ═══ HERO ═══ -->
 <section class="hero">
   <div class="hero-mesh"></div>
   <div class="hero-grain"></div>
@@ -834,7 +833,7 @@ footer {
       30-day free trial &nbsp;·&nbsp; No credit card required
     </div>
     <h1>Invoice Smarter.<br><em>Get Paid Faster.</em></h1>
-    <p class="sub">Create polished invoices, quotes, receipts and reports in seconds — from your phone, laptop, or anywhere you work.</p>
+    <p class="sub">Create polished invoices, quotes, receipts and reports in seconds from your phone, laptop, or anywhere you work.</p>
     <div class="hero-actions">
       <a href="/app#register" class="btn btn-accent btn-xl" onclick="history.pushState(null,'','/');return true;">
         <i class="fa-solid fa-rocket"></i> Start Free for 30 Days
@@ -845,7 +844,6 @@ footer {
     </div>
     <p class="hero-note">
       <span>✓ No credit card</span>
-      <span>✓ Works on any device</span>
       <span>✓ PDF in 60 seconds</span>
     </p>
   </div>
@@ -1362,14 +1360,22 @@ footer {
   <div class="footer-bottom">
     <span>© 2026 StanleyBytes (Pty) Ltd. All rights reserved.</span>
     <div class="footer-bottom-links">
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms of Service</a>
-      <a href="#">Cookie Policy</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/cookies">Cookie Policy</a>
     </div>
   </div>
 </footer>
 
 <script>
+
+  // If user is already logged in, send them to dashboard
+  const _token = localStorage.getItem('rb_token');
+  const _biz   = localStorage.getItem('rb_business');
+  if (_token && _biz) {
+    window.location.replace('/app');
+  }
+
 // FAQ Toggle
 function tFaq(el) {
   const i = el.closest('.faq-item');

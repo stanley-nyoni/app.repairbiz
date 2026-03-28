@@ -22,7 +22,7 @@ SMTP_FROM    = os.environ.get('SMTP_FROM', SMTP_USER)
 EMAIL_ENABLED = bool(SMTP_USER and SMTP_PASS)
 
 PLANS = {
-    'starter': {'name':'Starter','price':59,'docs_per_month':50,'customers':100},
+    'starter': {'name':'Starter','price':59,'docs_per_month':2,'customers':100},
     'pro':     {'name':'Pro',    'price':99,'docs_per_month':300,'customers':500},
     'business':{'name':'Business','price':199,'docs_per_month':9999,'customers':9999},
 }
@@ -317,6 +317,43 @@ def check_subscription(f):
         return f(*args, **kwargs)
     return decorated
 
+def check_plan_limit(business_id, limit_type):
+    """
+    Returns (allowed, message)
+    limit_type: 'document' or 'customer'
+    """
+    with get_db() as db:
+        biz  = db.execute('SELECT * FROM businesses WHERE id=?', (business_id,)).fetchone()
+        plan = biz['plan'] if biz['plan'] in PLANS else 'starter'
+        limits = PLANS[plan]
+
+        if limit_type == 'document':
+            # Count docs created this month
+            now   = datetime.now()
+            month = now.strftime('%m')
+            year  = now.strftime('%Y')
+            count = db.execute(
+                """SELECT COUNT(*) as c FROM documents
+                   WHERE business_id=?
+                   AND strftime('%m', created_at)=?
+                   AND strftime('%Y', created_at)=?""",
+                (business_id, month, year)).fetchone()['c']
+            limit = limits['docs_per_month']
+            if limit != 9999 and count >= limit:
+                return False, f"You have reached your {limit} document limit for this month. Upgrade to create more."
+            return True, None
+
+        if limit_type == 'customer':
+            count = db.execute(
+                'SELECT COUNT(*) as c FROM customers WHERE business_id=?',
+                (business_id,)).fetchone()['c']
+            limit = limits['customers']
+            if limit != 9999 and count >= limit:
+                return False, f"You have reached your {limit} customer limit. Upgrade to add more."
+            return True, None
+
+    return True, None
+
 PREFIXES = {'invoice':'INV','receipt':'REC','quotation':'QUO','damage_report':'REP'}
 
 def next_doc_number(db, business_id, doc_type):
@@ -605,6 +642,10 @@ def list_customers():
 @app.route('/api/customers', methods=['POST'])
 @token_required
 def create_customer():
+    allowed, msg = check_plan_limit(request.business_id, 'customer')
+    if not allowed:
+        return jsonify({'error': msg, 'upgrade_required': True}), 403
+    
     d = request.json
     if not d.get('name'): return jsonify({'error':'Name required'}), 400
     with get_db() as db:
@@ -673,6 +714,10 @@ def list_documents():
 @token_required
 @check_subscription
 def create_document():
+    allowed, msg = check_plan_limit(request.business_id, 'document')
+    if not allowed:
+        return jsonify({'error': msg, 'upgrade_required': True}), 403
+    
     d = request.json
     doc_type = d.get('doc_type')
     if doc_type not in PREFIXES: return jsonify({'error':'Invalid document type'}), 400
@@ -685,7 +730,7 @@ def create_document():
         tax_amount = subtotal * tax_rate / 100
         total      = subtotal + tax_amount
         cur = db.execute('''INSERT INTO documents (business_id,doc_number,doc_type,customer_name,customer_phone,customer_email,customer_address,customer_tax_reg_no,issue_date,due_date,status,subtotal,tax_rate,tax_amount,total,notes,appliance_type,appliance_brand,model_number,serial_number,problem_description,technician_notes,estimated_cost,bank_name,bank_account_holder,bank_account_number,bank_branch_code,bank_reference,terms) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                         (request.business_id,doc_number,doc_type,d.get('customer_name',''),d.get('customer_phone',''),d.get('customer_email',''),d.get('customer_address',''),d.get('customer_tax_reg_no',''),d.get('issue_date',datetime.now().strftime('%Y-%m-%d')),d.get('due_date'),d.get('status','draft'),subtotal,tax_rate,tax_amount,total,d.get('notes',''),d.get('appliance_type'),d.get('appliance_brand'),d.get('model_number'),d.get('serial_number'),d.get('problem_description'),d.get('technician_notes'),d.get('estimated_cost'),d.get('bank_name',biz['bank_name']),d.get('bank_account_holder',biz['bank_account_holder']),d.get('bank_account_number',biz['bank_account_number']),d.get('bank_branch_code',biz['bank_branch_code']),d.get('bank_reference',biz['bank_reference']),d.get('terms',biz['terms'])))
+                         (request.business_id,doc_number,doc_type,d.get('customer_name',''),d.get('customer_phone',''),d.get('customer_email',''),d.get('customer_address',''),d.get('customer_tax_reg_no',''),d.get('issue_date',datetime.now().strftime('%Y-%m-%d')),d.get('due_date'),d.get('status','sent'),subtotal,tax_rate,tax_amount,total,d.get('notes',''),d.get('appliance_type'),d.get('appliance_brand'),d.get('model_number'),d.get('serial_number'),d.get('problem_description'),d.get('technician_notes'),d.get('estimated_cost'),d.get('bank_name',biz['bank_name']),d.get('bank_account_holder',biz['bank_account_holder']),d.get('bank_account_number',biz['bank_account_number']),d.get('bank_branch_code',biz['bank_branch_code']),d.get('bank_reference',biz['bank_reference']),d.get('terms',biz['terms'])))
         doc_id = cur.lastrowid
         for item in items:
             qty=float(item.get('quantity',1)); price=float(item.get('unit_price',0))
@@ -1292,6 +1337,18 @@ def index():
 @app.route('/app/')
 def app_page():
     return send_from_directory('templates','index.html')
+
+@app.route('/privacy')
+def privacy():
+    return send_from_directory('templates', 'privacy.html')
+
+@app.route('/terms')
+def terms():
+    return send_from_directory('templates', 'terms.html')
+
+@app.route('/cookies')
+def cookies():
+    return send_from_directory('templates', 'cookies.html')
 
 @app.route('/admin')
 @app.route('/admin/')

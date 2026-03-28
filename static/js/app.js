@@ -23,9 +23,22 @@ async function api(method, path, body = null, isForm = false) {
       checkSubscription();
       return null;
     }
-    if (!res.ok) throw new Error(data.error || 'Request failed');
+    if (!res.ok) {
+        if (data.upgrade_required) {
+            showUpgradePrompt(data.error);
+            return null;
+        }
+        throw new Error(data.error || 'Request failed');
+    }
     return data;
   } catch (e) { toast(e.message, 'error'); return null; }
+}
+
+function showUpgradePrompt(message) {
+    // Show a modal or toast directing them to upgrade
+    toast(message + ' Contact StanleyBytes to upgrade.', 'warning');
+    // Optionally navigate to settings where they can enter a license code
+    setTimeout(() => navigate('settings'), 2000);
 }
 
 async function apiNoAuth(method, path, body) {
@@ -590,10 +603,10 @@ function onCustomerNameInput() {
 // ── Create / Edit Document ────────────────────────────────────────────────────
 const DOC_LABELS = { invoice:'Invoice', receipt:'Receipt', quotation:'Quotation', damage_report:'Damage Report' };
 const STATUSES   = {
-  invoice:       ['draft','sent','paid','cancelled'],
-  receipt:       ['draft','paid','cancelled'],
-  quotation:     ['draft','sent','approved','rejected','cancelled'],
-  damage_report: ['draft','sent','approved','rejected'],
+  invoice:       ['sent','draft','paid','cancelled'],
+  receipt:       ['paid','draft','cancelled'],
+  quotation:     ['sent','draft','approved','rejected','cancelled'],
+  damage_report: ['sent','draft','approved','rejected'],
 };
 
 function openCreateDoc(type) {
@@ -838,7 +851,7 @@ async function saveDocument() {
     customer_tax_reg_no: document.getElementById('f-cust-tax')?.value   || '',
     issue_date: document.getElementById('f-issue-date')?.value || new Date().toISOString().split('T')[0],
     due_date:   document.getElementById('f-due-date')?.value   || null,
-    status:     document.getElementById('f-status')?.value     || 'draft',
+    status:     document.getElementById('f-status')?.value     || 'sent',
     notes:      document.getElementById('f-notes')?.value      || '',
     terms:      document.getElementById('f-terms')?.value      || '',
     tax_rate:   parseFloat(document.getElementById('f-tax-rate')?.value||0),
@@ -1587,11 +1600,11 @@ function initApp() {
 }
 
 if (token && business) {
+  // Replace landing page in history so back button doesn't go there
+  if (document.referrer.includes(window.location.host) || !document.referrer) {
+    history.replaceState(null, '', '/app');
+  }
   initApp();
 } else {
   document.getElementById('auth-screen').style.display = 'flex';
-  if (window.location.hash === '#register') {
-    showAuthTab('register');
-    history.replaceState(null, '', window.location.pathname);
-  }
 }
