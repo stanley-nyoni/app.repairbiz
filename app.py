@@ -303,7 +303,6 @@ def get_account_status(biz):
         if not exp_str: return False
         try:
             exp = datetime.fromisoformat(exp_str)
-            # Strip timezone info if present to compare naive datetimes
             if exp.tzinfo is not None:
                 exp = exp.replace(tzinfo=None)
             return datetime.now() > exp
@@ -411,11 +410,23 @@ def _biz_dict(b):
             'pdf_show_signature','last_login_at','is_active']
     d = {k: b[k] for k in keys if k in b.keys()}
     d['account_status'] = get_account_status(b)
-    if d['account_status']=='trial' and b['trial_expires_at']:
-        d['days_remaining'] = max(0,(datetime.fromisoformat(b['trial_expires_at'])-datetime.now()).days)
-    elif d['account_status']=='active' and b['license_expires_at']:
-        d['days_remaining'] = max(0,(datetime.fromisoformat(b['license_expires_at'])-datetime.now()).days)
-    else: d['days_remaining'] = 0
+
+    def _days_left(exp_str):
+        if not exp_str: return 0
+        try:
+            exp = datetime.fromisoformat(exp_str)
+            if exp.tzinfo is not None:
+                exp = exp.replace(tzinfo=None)
+            return max(0, (exp - datetime.now()).days)
+        except: return 0
+
+    if d['account_status'] == 'trial' and b['trial_expires_at']:
+        d['days_remaining'] = _days_left(b['trial_expires_at'])
+    elif d['account_status'] == 'active' and b['license_expires_at']:
+        d['days_remaining'] = _days_left(b['license_expires_at'])
+    else:
+        d['days_remaining'] = 0
+
     d['plan_info'] = PLANS.get(d['plan'], PLANS['starter'])
     return d
 
