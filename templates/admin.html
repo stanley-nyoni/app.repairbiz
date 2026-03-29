@@ -649,16 +649,42 @@ async function adminUpdateDocStatus(docId) {
   }
 }
 
-async function extendUser(id){
-  const plan=prompt('Plan (starter/pro/business):','pro');
-  if(!plan) return;
-  const months=prompt('Add how many months?','1');
-  if(!months) return;
-  const newExp=new Date();
-  newExp.setMonth(newExp.getMonth()+parseInt(months));
-  await fetchJson(`/api/admin/users/${id}`,{method:'PUT',body:JSON.stringify({plan,license_expires_at:newExp.toISOString()})});
-  alert(`Account updated! Expires: ${newExp.toISOString().substring(0,10)}`);
-  openUser(id);
+async function extendUser(id) {
+  const plan = prompt('Plan (starter / pro / business):', 'pro');
+  if (!plan) return;
+  if (!['starter','pro','business'].includes(plan.toLowerCase().trim())) {
+    alert('Invalid plan. Must be starter, pro or business.');
+    return;
+  }
+  const months = prompt('Add how many months?', '1');
+  if (!months || isNaN(parseInt(months))) return;
+
+  // If user currently has time left, extend from that date
+  // Otherwise extend from today
+  const userData = await fetchJson(`/api/admin/users/${id}`);
+  let base = new Date();
+  if (userData.license_expires_at) {
+    const existing = new Date(userData.license_expires_at);
+    if (existing > base) base = existing;
+  }
+  base.setMonth(base.getMonth() + parseInt(months));
+
+  const res = await fetchJson(`/api/admin/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      plan: plan.toLowerCase().trim(),
+      license_expires_at: base.toISOString()
+    })
+  });
+
+  if (res && res.email) {
+    alert(`✅ Done! ${res.business_name} is now on ${plan} plan until ${base.toISOString().substring(0,10)}`);
+    openUser(id);
+    loadDashboard();
+  } else {
+    alert('❌ Something went wrong. Check the console for details.');
+    console.error('extendUser response:', res);
+  }
 }
 
 async function toggleSuspend(id,isActive){

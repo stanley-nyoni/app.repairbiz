@@ -321,32 +321,52 @@ async function loadDashboard() {
   `;
 
   // ── Overdue panel ──────────────────────────────────────────────────────────
-  const overduePanel = document.getElementById('overdue-panel');
   const overdue = data.overdue_invoices || [];
-  if (overdue.length > 0 && overduePanel) {
-    document.getElementById('overdue-title').textContent =
-      `${overdue.length} Overdue Invoice${overdue.length > 1 ? 's' : ''}`;
-    document.getElementById('overdue-total').textContent =
-      `R ${formatMoney(data.unpaid_total)}`;
-    document.getElementById('overdue-list').innerHTML = overdue.slice(0,3).map(d => `
-      <div class="overdue-row">
-        <div>
-          <span style="font-size:12px;font-weight:700;color:#991b1b">${escHtml(d.customer_name)}</span>
-          <span style="font-size:11px;color:#b91c1c;margin-left:8px">${d.doc_number}</span>
-          <span style="font-size:11px;color:#dc2626;margin-left:6px">· Due ${formatDate(d.due_date)}</span>
+  const overdueWrap = document.getElementById('overdue-wrap');
+  if (!overdue.length) {
+    overdueWrap.style.display = 'none';
+  } else {
+    overdueWrap.style.display = 'block';
+    const totalOverdue = overdue.reduce((s, d) => s + (parseFloat(d.total) || 0), 0);
+    overdueWrap.innerHTML = `
+      <div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden">
+        <div onclick="const body=this.nextElementSibling;const arrow=this.querySelector('.ov-arrow');body.style.display=body.style.display==='none'?'block':'none';arrow.style.transform=body.style.display==='none'?'rotate(0deg)':'rotate(180deg)'"
+          style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;background:#fff8f5;border-left:3px solid var(--accent)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">⚠️</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--navy)">${overdue.length} Overdue Invoice${overdue.length!==1?'s':''}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px">R ${formatMoney(totalOverdue)} outstanding — tap to view</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px">${overdue.length}</span>
+            <span class="ov-arrow" style="font-size:11px;color:var(--muted);transition:transform .2s;display:inline-block">▼</span>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:13px;font-weight:800;color:#b91c1c">R ${formatMoney(d.total)}</span>
-          <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;font-size:11px;padding:4px 10px" onclick="openPaymentModal(${d.id})">💳 Pay</button>
-          ${d.customer_phone ? `<button class="btn btn-ghost btn-sm btn-icon" style="color:#25d366" onclick="openWhatsApp('${escVal(d.customer_phone)}','${escVal(d.doc_number)}','${escVal(d.customer_name)}')" title="WhatsApp reminder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-          </button>` : ''}
+        <div style="display:none">
+          ${overdue.map(d => `
+            <div onclick="viewDoc(${d.id})"
+              style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--border);cursor:pointer;transition:background .15s"
+              onmouseover="this.style.background='var(--sf2)'"
+              onmouseout="this.style.background='transparent'">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <div style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
+                <div style="min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--navy)">${d.doc_number}</div>
+                  <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${escHtml(d.customer_name)}</div>
+                </div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;margin-left:8px">
+                <div style="font-size:13px;font-weight:700;color:var(--navy)">R ${formatMoney(d.total)}</div>
+                <div style="font-size:10px;color:var(--danger);margin-top:2px">Due ${formatDate(d.due_date)}</div>
+              </div>
+            </div>`).join('')}
+          <div style="padding:11px 16px;border-top:1px solid var(--border);text-align:center">
+            <button class="btn btn-ghost btn-sm" onclick="navigate('documents')">View All Documents →</button>
+          </div>
         </div>
-      </div>`).join('') +
-      (overdue.length > 3 ? `<p style="font-size:11px;color:#b91c1c;text-align:center;margin-top:6px;cursor:pointer" onclick="navigate('documents')">+ ${overdue.length - 3} more overdue — View All →</p>` : '');
-    overduePanel.style.display = 'block';
-  } else if (overduePanel) {
-    overduePanel.style.display = 'none';
+      </div>`;
   }
 
   const labels    = data.monthly_chart.map(d => d.month);

@@ -490,13 +490,7 @@ tbody tr:hover{background:#fafbff}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div id="overdue-panel" style="display:none;background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px;border:2px solid #fca5a5">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">⚠️</span><span id="overdue-title" style="font-size:14px;font-weight:700;color:#b91c1c"></span></div>
-          <span id="overdue-total" style="font-size:16px;font-weight:800;color:#b91c1c"></span>
-        </div>
-        <div id="overdue-list"></div>
-      </div>
+      <div id="overdue-wrap" style="display:none;margin-bottom:18px"></div>
 
       <div id="welcome-banner" style="background:#fff;border-radius:14px;padding:18px 22px;margin-bottom:18px;border:1px solid #e3e7f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
@@ -701,23 +695,22 @@ tbody tr:hover{background:#fafbff}
             <button class="btn btn-navy" onclick="changePassword()">Update Password</button>
           </div>
           <div style="background:var(--sf2);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;margin-bottom:16px">
-          <div style="background:var(--navy);padding:14px 16px">
-            <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Subscription</div>
-            <div style="font-size:14px;font-weight:600;color:#fff">Enter your license code to activate</div>
+            <div style="background:var(--navy);padding:14px 16px">
+              <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Subscription</div>
+              <div style="font-size:14px;font-weight:600;color:#fff">Enter your license code to activate</div>
+            </div>
+            <div style="padding:16px">
+              <input id="settings-license-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
+                style="width:100%;padding:13px;border:2px solid var(--border);border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:16px;text-align:center;letter-spacing:.14em;text-transform:uppercase;outline:none;margin-bottom:10px;font-weight:600;box-sizing:border-box;background:#fff;color:var(--navy)"
+                oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
+                onkeydown="if(event.key==='Enter')activateLicenseFromSettings()">
+              <button onclick="activateLicenseFromSettings()" id="settings-license-btn"
+                style="width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+                🔑 Activate License
+              </button>
+              <div id="settings-license-msg" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;min-height:16px;font-weight:500">Enter the code you received from StanleyBytes</div>
+            </div>
           </div>
-          <div style="padding:16px">
-            <input id="license-code-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
-              style="width:100%;padding:13px;border:2px solid var(--border);border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:16px;text-align:center;letter-spacing:.14em;text-transform:uppercase;outline:none;margin-bottom:10px;font-weight:600;box-sizing:border-box;background:#fff;color:var(--navy)"
-              oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})(?=.)/g,'$1-').substring(0,19)"
-              onkeydown="if(event.key==='Enter')activateLicense()">
-            <button onclick="activateLicense()" id="license-btn"
-              style="width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-              <i class="fa-solid fa-key"></i>
-              Activate License
-            </button>
-            <div id="license-msg" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;min-height:16px;font-weight:500">Enter the code you received from StanleyBytes</div>
-          </div>
-        </div>
 
         </div>
         <div>

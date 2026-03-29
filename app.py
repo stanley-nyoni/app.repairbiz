@@ -325,6 +325,12 @@ def check_plan_limit(business_id, limit_type):
     with get_db() as db:
         biz  = db.execute('SELECT * FROM businesses WHERE id=?', (business_id,)).fetchone()
         plan = biz['plan'] if biz['plan'] in PLANS else 'starter'
+
+        # Trial users have no limits
+        if biz['plan'] == 'trial':
+            return True, None
+        
+
         limits = PLANS[plan]
 
         if limit_type == 'document':
@@ -1234,6 +1240,20 @@ def admin_get_user(user_id):
     ud['doc_stats']   = [dict(d) for d in doc_stats]
     ud['recent_docs'] = [dict(d) for d in recent_docs]
     return jsonify(ud)
+
+@app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+@admin_required
+def admin_update_user(user_id):
+    d = request.json
+    fields = ['plan','license_expires_at','is_active','trial_expires_at']
+    updates = {k:d[k] for k in fields if k in d}
+    if not updates: return jsonify({'error':'Nothing to update'}), 400
+    with get_db() as db:
+        db.execute(f"UPDATE businesses SET {', '.join(f'{k}=?' for k in updates)} WHERE id=?",
+                   list(updates.values())+[user_id])
+        db.commit()
+        u = db.execute('SELECT * FROM businesses WHERE id=?',(user_id,)).fetchone()
+    return jsonify(_biz_dict(u))
 
 
 
