@@ -6,6 +6,7 @@
 <title> SB Invoices Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 :root{--ink:#0d1117;--ink2:#1e2d3d;--muted:#4a5e6e;--pale:#8a9bb0;--bg:#f5f7fa;--surface:#fff;--border:#e4e9f0;--accent:#0f5fff;--green:#0d9f6f;--orange:#e8620a;--red:#d93025;--r:10px;--rx:16px;--sh:0 2px 12px rgba(0,0,0,.07)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -112,10 +113,10 @@ input,select{font-family:'Sora',sans-serif;font-size:13px}
       <div class="sl-sub">Super Admin Panel</div>
     </div>
     <nav>
-      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span>Dashboard</div>
-      <div class="nav-item" onclick="showPage('users')" id="nav-users"><span class="nav-icon">👥</span>Users</div>
-      <div class="nav-item" onclick="showPage('licenses')" id="nav-licenses"><span class="nav-icon">🔑</span>License Codes</div>
-      <div class="nav-item" onclick="showPage('support')" id="nav-support"><span class="nav-icon">💬</span>Support Info</div>
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>Dashboard</div>
+      <div class="nav-item" onclick="showPage('users')" id="nav-users"><span class="nav-icon"><i class="fa-solid fa-users"></i></span>Users</div>
+      <div class="nav-item" onclick="showPage('licenses')" id="nav-licenses"><span class="nav-icon"><i class="fa-solid fa-key"></i></span>License Codes</div>
+      <div class="nav-item" onclick="showPage('support')" id="nav-support"><span class="nav-icon"><i class="fa-solid fa-headset"></i></span>Support Info</div>
     </nav>
    <div class="sidebar-footer">StanleyBytes Admin<br>SB Invoices v2.0<br><span onclick="adminLogout()" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:11px;text-decoration:underline">Sign Out</span></div>
   </div>
@@ -277,10 +278,10 @@ input,select{font-family:'Sora',sans-serif;font-size:13px}
           </div>
           <div class="card"><div class="card-header"><div class="card-title">Quick Actions</div></div>
             <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-              <button class="btn btn-outline" onclick="window.open('mailto:info@stanleybytes.co.za')">📧 Open Email</button>
-              <button class="btn btn-outline" onclick="window.open('https://wa.me/27611440669')">💬 Open WhatsApp</button>
-              <button class="btn btn-accent" onclick="showPage('licenses')">🔑 Generate License Code</button>
-              <button class="btn btn-outline" onclick="showPage('users')">👥 View All Users</button>
+              <button class="btn btn-outline" onclick="window.open('mailto:info@stanleybytes.co.za')"><i class="fa-solid fa-envelope"></i> Open Email</button>
+              <button class="btn btn-outline" onclick="window.open('https://wa.me/27611440669')"><i class="fa-brands fa-whatsapp"></i> Open WhatsApp</button>
+              <button class="btn btn-accent" onclick="showPage('licenses')"><i class="fa-solid fa-key"></i> Generate License Code</button>
+              <button class="btn btn-outline" onclick="showPage('users')"><i class="fa-solid fa-users"></i> View All Users</button>
             </div>
           </div>
         </div>
@@ -393,6 +394,18 @@ async function loadDashboard(){
   }).join('')}</tbody></table>` : '<div class="empty-state">No users expiring soon 🎉</div>';
 }
 
+function formatSATime(dateStr) {
+  if (!dateStr) return 'Never';
+  try {
+    // Parse the datetime and add 2 hours for SA timezone (UTC+2)
+    const d = new Date(dateStr);
+    const saTime = new Date(d.getTime() + 2 * 60 * 60 * 1000);
+    const date = saTime.toISOString().substring(0, 10);
+    const time = saTime.toISOString().substring(11, 16);
+    return `${date} ${time}`;
+  } catch { return dateStr.substring(0, 10); }
+}
+
 async function loadUsers(){
   const search=document.getElementById('user-search').value;
   const plan=document.getElementById('user-filter-plan').value;
@@ -411,7 +424,7 @@ async function loadUsers(){
     <td>${statusBadge(u.account_status)}</td>
     <td>${u.doc_count||0}</td>
     <td>${u.docs_this_month||0}</td>
-    <td>${u.last_login_at?new Date(u.last_login_at).toLocaleString('en-ZA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Never'}</td>
+    <td>${u.last_login_at ? formatSATime(u.last_login_at) : 'Never'}</td>
     <td>${u.login_count||0}</td>
     <td>${u.created_at?u.created_at.substring(0,10):''}</td>
     <td><button class="btn btn-sm btn-outline" onclick="openUser(${u.id})">View</button></td>
@@ -486,7 +499,7 @@ async function openUser(id){
         <div class="info-row"><span class="lbl">Status</span><span class="val">${statusBadge(u.account_status)}</span></div>
         <div class="info-row"><span class="lbl">Plan</span><span class="val">${planBadge(u.plan)}</span></div>
         <div class="info-row"><span class="lbl">Expires</span><span class="val">${expDate?expDate.substring(0,10):'—'} ${daysLeft>0?`(${daysLeft}d left)`:''}</span></div>
-        <div class="info-row"><span class="lbl">Last Login</span><span class="val">${u.last_login_at?new Date(u.last_login_at).toLocaleString('en-ZA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Never'}</span></div>
+        <div class="info-row"><span class="lbl">Last Login</span><span class="val">${formatSATime(u.last_login_at)}</span></div>
         <div class="info-row"><span class="lbl">Active</span><span class="val">${u.is_active?'Yes':'No'}</span></div>
       </div>
       <div>

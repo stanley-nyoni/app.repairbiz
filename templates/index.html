@@ -8,6 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#1a2744">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SB Invoices">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+
 <style>
 :root{--navy:#1a2744;--navy-l:#243461;--accent:#e85d26;--accent-h:#cf4e1e;--accent-bg:rgba(232,93,38,.07);--bg:#f0f2f8;--surface:#ffffff;--sf2:#f7f8fc;--border:#e3e7f0;--text:#1a2744;--muted:#6b7a99;--light:#a8b2c8;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444;--info:#3b82f6;--sw:256px;--th:56px;--bn:62px;--r:12px;--rs:8px;--sh:0 2px 12px rgba(26,39,68,.08);--shl:0 8px 32px rgba(26,39,68,.14)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -348,7 +356,7 @@ tbody tr:hover{background:#fafbff}
     </div>
     <div id="auth-verify" style="display:none">
       <div style="text-align:center;margin-bottom:20px">
-        <div style="width:56px;height:56px;background:var(--accent-bg);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px">📧</div>
+        <div style="width:56px;height:56px;background:var(--accent-bg);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px"><i class="fa-solid fa-envelope"></i></div>
         <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px">Check your email</h2>
         <p style="font-size:13px;color:var(--muted);line-height:1.6">We sent a 6-digit code to<br><strong id="verify-email-display" style="color:var(--navy)"></strong></p>
       </div>
@@ -371,7 +379,7 @@ tbody tr:hover{background:#fafbff}
     </div>
     <div id="auth-forgot" style="display:none">
       <div style="text-align:center;margin-bottom:20px">
-        <div style="width:56px;height:56px;background:#fef3c7;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px">🔑</div>
+        <div style="width:56px;height:56px;background:#fef3c7;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px"><i class="fa-solid fa-key"></i></div>
         <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px">Reset Password</h2>
         <p style="font-size:13px;color:var(--muted);line-height:1.6">Enter your email and we'll send a reset code</p>
       </div>
@@ -449,7 +457,7 @@ tbody tr:hover{background:#fafbff}
       <div style="background:#fff;border-radius:20px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.35)">
 
         <!-- Icon + title -->
-        <div style="width:64px;height:64px;background:#fff3cd;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px">⏰</div>
+        <div style="width:64px;height:64px;background:#fff3cd;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px"><i class="fa-solid fa-clock"></i></div>
         <h2 id="wall-title" style="font-size:20px;font-weight:800;color:#1a2744;margin-bottom:8px">Your trial has ended</h2>
         <p id="wall-sub" style="font-size:13px;color:#6b7a99;line-height:1.65;margin-bottom:20px">Get a license code from StanleyBytes to activate your subscription and keep invoicing.</p>
 
@@ -466,7 +474,7 @@ tbody tr:hover{background:#fafbff}
               onkeydown="if(event.key==='Enter')activateLicense()">
             <button onclick="activateLicense()" id="license-btn"
               style="width:100%;padding:13px;background:#1a2744;color:#fff;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-              🔑 Activate License
+              <i class="fa-solid fa-key"></i> Activate License
             </button>
             <div id="license-msg" style="font-size:12px;color:#6b7a99;text-align:center;margin-top:10px;min-height:16px;font-weight:500">Enter the code you received from StanleyBytes</div>
           </div>
@@ -706,7 +714,7 @@ tbody tr:hover{background:#fafbff}
                 onkeydown="if(event.key==='Enter')activateLicenseFromSettings()">
               <button onclick="activateLicenseFromSettings()" id="settings-license-btn"
                 style="width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-                🔑 Activate License
+                 <i class="fa-solid fa-key"></i> Activate License
               </button>
               <div id="settings-license-msg" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;min-height:16px;font-weight:500">Enter the code you received from StanleyBytes</div>
             </div>
@@ -1061,6 +1069,15 @@ tbody tr:hover{background:#fafbff}
 </div>
 
 <div class="toast-container" id="toast-container"></div>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/static/service-worker.js')
+        .then(reg => console.log('SW registered'))
+        .catch(err => console.log('SW failed:', err));
+    });
+  }
+</script>
 <script src="/static/js/app.js"></script>
 </body>
 </html>

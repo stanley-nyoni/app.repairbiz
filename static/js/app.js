@@ -50,6 +50,64 @@ async function apiNoAuth(method, path, body) {
   } catch (e) { showAuthError('Network error'); return null; }
 }
 
+//  Install PWA prompt handler
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show your custom install banner
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  // Don't show the banner if the user has dismissed it before
+  if (localStorage.getItem('pwa_dismissed')) return;
+  const existing = document.getElementById('pwa-install-banner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.innerHTML = `
+    <div style="position:fixed;bottom:70px;left:12px;right:12px;background:#1a2744;border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:9000;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="/static/icon-192.png" style="width:40px;height:40px;border-radius:10px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#fff">Install SB Invoices</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px">Add to home screen for quick access</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button onclick="dismissInstallBanner()" style="padding:7px 12px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Not now</button>
+        <button onclick="installPWA()" style="padding:7px 12px;background:#e85d26;color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer">Install</button>
+      </div>
+    </div>`;
+  document.body.appendChild(banner);
+}
+
+async function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  dismissInstallBanner();
+  if (result.outcome === 'accepted') {
+    toast('App installed successfully!', 'success');
+  }
+}
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.remove();
+  // Remember dismissal so it doesn't show every time
+  localStorage.setItem('pwa_dismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  dismissInstallBanner();
+  toast('SB Invoices installed!', 'success');
+});
+
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function toast(msg, type = 'success') {
   const c = document.getElementById('toast-container');
@@ -85,7 +143,6 @@ function doLogout() {
   if(typeof showAuthMain==='function') showAuthMain();
 }
 
-// login/register/logout implemented in full auth block below
 
 // ── Subscription ──────────────────────────────────────────────────────────────
 function checkSubscription() {

@@ -334,13 +334,13 @@ def check_plan_limit(business_id, limit_type):
     """
     with get_db() as db:
         biz  = db.execute('SELECT * FROM businesses WHERE id=?', (business_id,)).fetchone()
-        plan = biz['plan'] if biz['plan'] in PLANS else 'starter'
 
         # Trial users have no limits
         if biz['plan'] == 'trial':
             return True, None
         
 
+        plan = biz['plan'] if biz['plan'] in PLANS else 'starter'
         limits = PLANS[plan]
 
         if limit_type == 'document':
@@ -472,8 +472,8 @@ def register():
     with get_db() as db:
         if db.execute('SELECT id FROM businesses WHERE email=?',(email,)).fetchone():
             return jsonify({'error':'Email already registered'}), 409
-        db.execute('INSERT INTO businesses (email,password_hash,business_name,phone,address,plan,email_verified,otp_code,otp_expires_at) VALUES (?,?,?,?,?,?,?,?,?)',
-                   (email,hash_password(d['password']),d['business_name'],d.get('phone',''),d.get('address',''),'trial',0,otp,otp_exp))
+        db.execute('INSERT INTO businesses (email,password_hash,business_name,phone,address,plan,email_verified,otp_code,otp_expires_at,login_count,last_login_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                   (email,hash_password(d['password']),d['business_name'],d.get('phone',''),d.get('address',''),'trial',0,otp,otp_exp,1,datetime.now().isoformat()))
         db.commit()
         biz = db.execute('SELECT * FROM businesses WHERE email=?',(email,)).fetchone()
     send_otp_email(email, d['business_name'], otp)
@@ -1370,6 +1370,32 @@ def suspend_user(user_id):
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
+@app.route('/api/admin/fix-login-tracking')
+@admin_required
+def fix_login_tracking():
+    with get_db() as db:
+        # Find users who have documents but show no login
+        users = db.execute("""
+            SELECT b.id, b.email, COUNT(d.id) as doc_count
+            FROM businesses b
+            LEFT JOIN documents d ON d.business_id = b.id
+            WHERE b.login_count = 0 OR b.last_login_at IS NULL
+            GROUP BY b.id
+            HAVING doc_count > 0
+        """).fetchall()
+        fixed = 0
+        for u in users:
+            # Set login count to at least 1 and last_login_at to created_at
+            db.execute("""
+                UPDATE businesses 
+                SET login_count = MAX(login_count, 1),
+                    last_login_at = COALESCE(last_login_at, created_at)
+                WHERE id = ?
+            """, (u['id'],))
+            fixed += 1
+        db.commit()
+    return jsonify({'message': f'Fixed {fixed} users with missing login tracking'})
+
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
@@ -1396,6 +1422,17 @@ def cookies():
 @app.route('/admin/')
 def admin_page():
     return send_from_directory('templates','admin.html')
+
+@app.route('/static/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/static/service-worker.js')
+def service_worker():
+    response = send_from_directory('static', 'service-worker.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
 
 @app.route('/<path:path>')
 def serve_static(path):
