@@ -321,6 +321,19 @@ function updateSidebar() {
   }
 }
 
+// Password toggle for auth forms
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  // Swap the eye icon
+  btn.querySelector('svg').innerHTML = isPassword
+    ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`
+    : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  btn.style.color = isPassword ? 'var(--accent)' : 'var(--muted)';
+}
+
 // ── Navigation ────────────────────────────────────────────────────────────────
 const pageLabels = { dashboard:'Dashboard', documents:'Documents', accounting:'Accounting', settings:'Settings', customers:'Customers', catalogue:'Services & Parts' };
 
@@ -1070,7 +1083,20 @@ async function shareAction(action) {
   }
 }
 
+// Delete document from view modal
+async function deleteDocFromModal(id) {
+  if (!confirm('Delete this document? This cannot be undone.')) return;
+  const r = await api('DELETE', `/documents/${id}`);
+  if (r) {
+    toast('Document deleted');
+    closeModal('view-modal');
+    if (document.getElementById('page-documents')?.classList.contains('active')) loadDocuments();
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+  }
+}
+
 // ── View Document ─────────────────────────────────────────────────────────────
+
 async function viewDoc(id) {
   const doc = await api('GET', `/documents/${id}`);
   if (!doc) return;
@@ -1083,10 +1109,12 @@ async function viewDoc(id) {
       </select>
       <button class="btn btn-navy btn-sm" onclick="updateDocStatus(${doc.id})">Update</button>
     </div>
+    ${doc.doc_type === 'invoice' && doc.status !== 'paid' && doc.status !== 'cancelled' ? 
+  `<button class="btn btn-navy btn-sm" onclick="closeModal('view-modal');openPaymentModal(${doc.id})">💰 Record Payment</button>` : ''}
+    <button class="btn btn-danger btn-sm" onclick="deleteDocFromModal(${doc.id})">Delete</button>
     <button class="btn btn-ghost btn-sm" onclick="editDoc(${doc.id})">Edit</button>
     <button class="btn btn-ghost btn-sm" onclick="closeModal('view-modal')">Close</button>
     <button class="btn btn-primary btn-sm" onclick="window._shareDocId=${doc.id};window._shareDocNum='${doc.doc_number}';document.getElementById('share-doc-name').textContent='${escVal(DOC_LABELS[doc.doc_type]+' '+doc.doc_number)}';document.getElementById('share-doc-amount').textContent='R ${formatMoney(doc.total)}';closeModal('view-modal');openModal('share-modal')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       Share PDF
     </button>
   `;

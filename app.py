@@ -1370,32 +1370,6 @@ def suspend_user(user_id):
         db.execute('UPDATE businesses SET is_active=? WHERE id=?',(val,user_id)); db.commit()
     return jsonify({'message':f'User {"suspended" if val==0 else "unsuspended"}'})
 
-@app.route('/api/admin/fix-login-tracking')
-@admin_required
-def fix_login_tracking():
-    with get_db() as db:
-        # Find users who have documents but show no login
-        users = db.execute("""
-            SELECT b.id, b.email, COUNT(d.id) as doc_count
-            FROM businesses b
-            LEFT JOIN documents d ON d.business_id = b.id
-            WHERE b.login_count = 0 OR b.last_login_at IS NULL
-            GROUP BY b.id
-            HAVING doc_count > 0
-        """).fetchall()
-        fixed = 0
-        for u in users:
-            # Set login count to at least 1 and last_login_at to created_at
-            db.execute("""
-                UPDATE businesses 
-                SET login_count = MAX(login_count, 1),
-                    last_login_at = COALESCE(last_login_at, created_at)
-                WHERE id = ?
-            """, (u['id'],))
-            fixed += 1
-        db.commit()
-    return jsonify({'message': f'Fixed {fixed} users with missing login tracking'})
-
 # ── Static routes ──────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
