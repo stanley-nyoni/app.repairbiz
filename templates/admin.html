@@ -669,11 +669,11 @@ async function extendUser(id) {
   }
   base.setMonth(base.getMonth() + parseInt(months));
 
-  const res = await fetchJson(`/api/admin/users/${id}`, {
+const res = await fetchJson(`/api/admin/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify({
       plan: plan.toLowerCase().trim(),
-      license_expires_at: base.toISOString()
+      license_expires_at: base.toISOString().replace('Z','').split('.')[0]
     })
   });
 

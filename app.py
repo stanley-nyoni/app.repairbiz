@@ -298,12 +298,23 @@ def admin_required(f):
 def get_account_status(biz):
     if not biz['is_active']: return 'suspended'
     plan = biz['plan'] or 'trial'
+
+    def is_expired(exp_str):
+        if not exp_str: return False
+        try:
+            exp = datetime.fromisoformat(exp_str)
+            # Strip timezone info if present to compare naive datetimes
+            if exp.tzinfo is not None:
+                exp = exp.replace(tzinfo=None)
+            return datetime.now() > exp
+        except: return False
+
     if plan == 'trial':
         exp = biz['trial_expires_at']
         if not exp: return 'trial'
-        return 'expired' if datetime.now() > datetime.fromisoformat(exp) else 'trial'
+        return 'expired' if is_expired(exp) else 'trial'
     exp = biz['license_expires_at']
-    if exp and datetime.now() > datetime.fromisoformat(exp): return 'expired'
+    if is_expired(exp): return 'expired'
     return 'active'
 
 def check_subscription(f):
